@@ -1,0 +1,31 @@
+{"timestamp": "2026-04-17T14:52:47.218495+00:00", "level": "INFO", "module": "train", "message": "SaMD Trainer v3.0.0 \u2014 run_id=20260417T145247Z"}
+{"timestamp": "2026-04-17T14:52:51.098546+00:00", "level": "INFO", "module": "train", "message": "MLflow Run ID: 2a41c4f46d79409e96d489399e7cfd4a"}
+{"timestamp": "2026-04-17T14:52:51.142855+00:00", "level": "INFO", "module": "train", "message": "Loading data: /content/drive/MyDrive/ai-module/data/nhanes_clinical_cohort.csv"}
+{"timestamp": "2026-04-17T14:52:51.189110+00:00", "level": "INFO", "module": "train", "message": "Data SHA-256: d0af6d952b0f8229d1a6c50f354c020aab612ff5a8389b4edb039b134164c8a1"}
+{"timestamp": "2026-04-17T14:52:51.807588+00:00", "level": "INFO", "module": "train", "message": "SMOTE-NC: 6400 \u2192 7464 samples (class balance: 0.50)"}
+{"timestamp": "2026-04-17T14:52:51.816010+00:00", "level": "INFO", "module": "train", "message": "Running adversarial validation \u2026"}
+{"timestamp": "2026-04-17T14:53:02.448967+00:00", "level": "INFO", "module": "train", "message": "Adversarial AUC=0.510 \u2014 distributions similar."}
+{"timestamp": "2026-04-17T14:53:02.490575+00:00", "level": "INFO", "module": "train", "message": "Computing nested CV estimate \u2026"}
+{"timestamp": "2026-04-17T14:53:14.155179+00:00", "level": "INFO", "module": "train", "message": "Nested CV AUC: 0.7796 \u00b1 0.0085"}
+{"timestamp": "2026-04-17T14:53:14.205306+00:00", "level": "INFO", "module": "train", "message": "Starting multi-objective Optuna optimisation (NSGA-II) \u2026"}
+{"timestamp": "2026-04-17T15:04:25.914370+00:00", "level": "INFO", "module": "train", "message": "Best trial \u2014 AUC=0.7791 | 1-Brier=0.8007 | Fairness=0.5571"}
+{"timestamp": "2026-04-17T15:04:25.919167+00:00", "level": "INFO", "module": "train", "message": "Best params: {'lr': 0.053915976081982384, 'depth': 10, 'n': 359, 'leaves': 134, 'min_child': 18, 'subsample': 0.8313120563984696, 'colsample': 0.9801645936306235, 'reg_alpha': 1.7195719847367482e-05, 'reg_lambda': 0.0007652471350809116}"}
+{"timestamp": "2026-04-17T15:04:26.101224+00:00", "level": "INFO", "module": "train", "message": "Building stacking ensemble (LightGBM + CatBoost + XGB + TFT) \u2026"}
+{"timestamp": "2026-04-17T15:34:27.059900+00:00", "level": "INFO", "module": "train", "message": "Model trained and isotonically calibrated."}
+{"timestamp": "2026-04-17T15:34:27.066986+00:00", "level": "INFO", "module": "train", "message": "Applying MAPIE conformal prediction (\u03b1=0.05) \u2026"}
+{"timestamp": "2026-04-17T15:34:30.194767+00:00", "level": "WARNING", "module": "train", "message": "Unexpected MAPIE output shape: (1600,)"}
+{"timestamp": "2026-04-17T15:34:34.847647+00:00", "level": "INFO", "module": "train", "message": "Thresholds \u2014 Youden=0.485 | F1=0.480 | Cost=0.270"}
+{"timestamp": "2026-04-17T15:34:34.866594+00:00", "level": "INFO", "module": "train", "message": "Computing BCa bootstrap CI (n_boot=2000) \u2026"}
+{"timestamp": "2026-04-17T15:34:46.114444+00:00", "level": "INFO", "module": "train", "message": "Bootstrap CI saved to artifacts/bootstrap_ci.json"}
+{"timestamp": "2026-04-17T15:34:46.119364+00:00", "level": "INFO", "module": "train", "message": "\n============================================================"}
+{"timestamp": "2026-04-17T15:34:46.125808+00:00", "level": "INFO", "module": "train", "message": "  AUC_ROC: 0.7561  [95%CI: 0.7324\u20130.7787]"}
+{"timestamp": "2026-04-17T15:34:46.130103+00:00", "level": "INFO", "module": "train", "message": "  AUC_PR: 0.6945  [95%CI: 0.6567\u20130.7284]"}
+{"timestamp": "2026-04-17T15:34:46.135463+00:00", "level": "INFO", "module": "train", "message": "  Brier_Score: 0.2007  [95%CI: 0.1916\u20130.2105]"}
+{"timestamp": "2026-04-17T15:34:46.140414+00:00", "level": "INFO", "module": "train", "message": "  Sensitivity: 0.904  [95%CI: 0.8816\u20130.9265]"}
+{"timestamp": "2026-04-17T15:34:46.145336+00:00", "level": "INFO", "module": "train", "message": "  Specificity: 0.3644  [95%CI: 0.3344\u20130.3949]"}
+{"timestamp": "2026-04-17T15:34:46.150870+00:00", "level": "INFO", "module": "train", "message": "  PPV: 0.5042  [95%CI: 0.4759\u20130.5332]"}
+{"timestamp": "2026-04-17T15:34:46.155487+00:00", "level": "INFO", "module": "train", "message": "  NPV: 0.8416  [95%CI: 0.8048\u20130.8762]"}
+{"timestamp": "2026-04-17T15:34:46.160598+00:00", "level": "INFO", "module": "train", "message": "  LR+: 1.4224  [95%CI: 1.35\u20131.501]"}
+{"timestamp": "2026-04-17T15:34:46.166517+00:00", "level": "INFO", "module": "train", "message": "  LR-: 0.2633  [95%CI: 0.2001\u20130.3297]"}
+{"timestamp": "2026-04-17T15:34:46.171142+00:00", "level": "INFO", "module": "train", "message": "  NNS: 2.7  [95%CI: 2.5\u20132.8]"}
+{"timestamp": "2026-04-17T15:34:46.176173+00:00", "level": "INFO", "module": "train", "message": "============================================================"}

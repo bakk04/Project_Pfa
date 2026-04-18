@@ -1,0 +1,13 @@
+{"timestamp": "2026-04-17T12:39:54.787563+00:00", "level": "INFO", "module": "train", "message": "SaMD Trainer v3.0.0 \u2014 run_id=20260417T123954Z"}
+{"timestamp": "2026-04-17T12:39:58.370081+00:00", "level": "INFO", "module": "train", "message": "MLflow Run ID: 11148f85a7584f928d3f3352ef6a87cf"}
+{"timestamp": "2026-04-17T12:39:58.434079+00:00", "level": "INFO", "module": "train", "message": "Loading data: /content/drive/MyDrive/ai-module/data/nhanes_clinical_cohort.csv"}
+{"timestamp": "2026-04-17T12:39:58.477944+00:00", "level": "INFO", "module": "train", "message": "Data SHA-256: d0af6d952b0f8229d1a6c50f354c020aab612ff5a8389b4edb039b134164c8a1"}
+{"timestamp": "2026-04-17T12:39:59.116205+00:00", "level": "INFO", "module": "train", "message": "SMOTE-NC: 6400 \u2192 7464 samples (class balance: 0.50)"}
+{"timestamp": "2026-04-17T12:39:59.121612+00:00", "level": "INFO", "module": "train", "message": "Running adversarial validation \u2026"}
+{"timestamp": "2026-04-17T12:40:08.326025+00:00", "level": "INFO", "module": "train", "message": "Adversarial AUC=0.510 \u2014 distributions similar."}
+{"timestamp": "2026-04-17T12:40:08.362554+00:00", "level": "INFO", "module": "train", "message": "Computing nested CV estimate \u2026"}
+{"timestamp": "2026-04-17T12:40:34.997659+00:00", "level": "INFO", "module": "train", "message": "Nested CV AUC: 0.7796 \u00b1 0.0085"}
+{"timestamp": "2026-04-17T12:40:35.052491+00:00", "level": "INFO", "module": "train", "message": "Starting multi-objective Optuna optimisation (NSGA-II) \u2026"}
+{"timestamp": "2026-04-17T12:53:06.759086+00:00", "level": "INFO", "module": "train", "message": "Best trial \u2014 AUC=0.7791 | 1-Brier=0.8007 | Fairness=0.5571"}
+{"timestamp": "2026-04-17T12:53:06.764644+00:00", "level": "INFO", "module": "train", "message": "Best params: {'lr': 0.053915976081982384, 'depth': 10, 'n': 359, 'leaves': 134, 'min_child': 18, 'subsample': 0.8313120563984696, 'colsample': 0.9801645936306235, 'reg_alpha': 1.7195719847367482e-05, 'reg_lambda': 0.0007652471350809116}"}
+{"timestamp": "2026-04-17T12:53:06.952731+00:00", "level": "INFO", "module": "train", "message": "Building stacking ensemble (LightGBM + CatBoost + XGB + TFT) \u2026"}

@@ -1,0 +1,6 @@
+{"timestamp": "2026-04-17T10:56:58.012388+00:00", "level": "INFO", "module": "train", "message": "SaMD Trainer v2.0.0 initialized \u2014 run_id=20260417T105657Z"}
+{"timestamp": "2026-04-17T10:57:03.391493+00:00", "level": "INFO", "module": "train", "message": "MLflow Run ID: 9d395510be8d424fb0bafebbf7de03ad"}
+{"timestamp": "2026-04-17T10:57:03.429794+00:00", "level": "INFO", "module": "train", "message": "Loading data from /content/drive/MyDrive/ai-module/data/nhanes_clinical_cohort.csv"}
+{"timestamp": "2026-04-17T10:57:03.889407+00:00", "level": "INFO", "module": "train", "message": "Data SHA-256: d0af6d952b0f8229d1a6c50f354c020aab612ff5a8389b4edb039b134164c8a1"}
+{"timestamp": "2026-04-17T10:57:04.516316+00:00", "level": "INFO", "module": "train", "message": "SMOTE-NC resampling: 6400 \u2192 7464 samples"}
+{"timestamp": "2026-04-17T10:57:04.521977+00:00", "level": "INFO", "module": "train", "message": "Starting Optuna optimization..."}

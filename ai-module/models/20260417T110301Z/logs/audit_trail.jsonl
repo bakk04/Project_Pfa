@@ -1,0 +1,8 @@
+{"timestamp": "2026-04-17T11:03:01.886928+00:00", "level": "INFO", "module": "train", "message": "SaMD Trainer v2.0.0 initialized \u2014 run_id=20260417T110301Z"}
+{"timestamp": "2026-04-17T11:03:05.868092+00:00", "level": "INFO", "module": "train", "message": "MLflow Run ID: 82328f313e8c4c2ca6e9cb8b692c3d7d"}
+{"timestamp": "2026-04-17T11:03:05.947820+00:00", "level": "INFO", "module": "train", "message": "Loading data from /content/drive/MyDrive/ai-module/data/nhanes_clinical_cohort.csv"}
+{"timestamp": "2026-04-17T11:03:05.986090+00:00", "level": "INFO", "module": "train", "message": "Data SHA-256: d0af6d952b0f8229d1a6c50f354c020aab612ff5a8389b4edb039b134164c8a1"}
+{"timestamp": "2026-04-17T11:03:06.539879+00:00", "level": "INFO", "module": "train", "message": "SMOTE-NC resampling: 6400 \u2192 7464 samples"}
+{"timestamp": "2026-04-17T11:03:06.566515+00:00", "level": "INFO", "module": "train", "message": "Starting Optuna optimization..."}
+{"timestamp": "2026-04-17T11:14:58.587019+00:00", "level": "INFO", "module": "train", "message": "Best AUC: 0.7819 | Params: {'lr': 0.027826977489030905, 'depth': 9, 'n': 155, 'leaves': 65, 'min_child': 13, 'subsample': 0.6925969474702127, 'colsample': 0.7647500007426867, 'reg_alpha': 5.397588347994572e-05, 'reg_lambda': 0.01452769075354368}"}
+{"timestamp": "2026-04-17T11:14:58.815381+00:00", "level": "INFO", "module": "train", "message": "Building stacking ensemble (LightGBM + TFT)..."}

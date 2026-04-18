@@ -1,0 +1,14 @@
+artifact_uri: /content/drive/MyDrive/ai-module/mlruns/470265414648501154/c0ae09b7f033413d82008cbf0a4be500/artifacts
+end_time: 1776456701423
+entry_point_name: ''
+experiment_id: '470265414648501154'
+lifecycle_stage: active
+run_id: c0ae09b7f033413d82008cbf0a4be500
+run_name: 20260417T201123Z
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1776456687917
+status: 4
+tags: []
+user_id: root
