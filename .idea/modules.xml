@@ -2,7 +2,11 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+<<<<<<< HEAD
       <module fileurl="file://$PROJECT_DIR$/.idea/ai-model.iml" filepath="$PROJECT_DIR$/.idea/ai-model.iml" />
+=======
+      <module fileurl="file://$PROJECT_DIR$/.idea/ai-module.iml" filepath="$PROJECT_DIR$/.idea/ai-module.iml" />
+>>>>>>> c03bb7e (correction main)
     </modules>
   </component>
 </project>

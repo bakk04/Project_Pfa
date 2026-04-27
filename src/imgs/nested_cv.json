@@ -1,0 +1,6 @@
+{
+  "nested_cv_mae_mean": 5.0541,
+  "nested_cv_mae_std": 0.1839,
+  "nested_cv_r2_mean": 0.9453,
+  "nested_cv_r2_std": 0.0052
+}

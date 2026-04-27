@@ -1,8 +1,0 @@
-{"timestamp": "2026-04-17T20:11:23.834440+00:00", "level": "INFO", "module": "train", "message": "SaMD Trainer v3.0.0 \u2014 run_id=20260417T201123Z"}
-{"timestamp": "2026-04-17T20:11:28.167001+00:00", "level": "INFO", "module": "train", "message": "MLflow Run ID: c0ae09b7f033413d82008cbf0a4be500"}
-{"timestamp": "2026-04-17T20:11:28.230332+00:00", "level": "INFO", "module": "train", "message": "Loading data: /content/drive/MyDrive/ai-module/data/nhanes_clinical_cohort.csv"}
-{"timestamp": "2026-04-17T20:11:28.283360+00:00", "level": "INFO", "module": "train", "message": "Data SHA-256: d0af6d952b0f8229d1a6c50f354c020aab612ff5a8389b4edb039b134164c8a1"}
-{"timestamp": "2026-04-17T20:11:28.887423+00:00", "level": "INFO", "module": "train", "message": "SMOTE-NC: 6400 \u2192 7464 samples (class balance: 0.50)"}
-{"timestamp": "2026-04-17T20:11:28.892444+00:00", "level": "INFO", "module": "train", "message": "Running adversarial validation \u2026"}
-{"timestamp": "2026-04-17T20:11:41.058912+00:00", "level": "INFO", "module": "train", "message": "Adversarial AUC=0.510 \u2014 distributions similar."}
-{"timestamp": "2026-04-17T20:11:41.095380+00:00", "level": "INFO", "module": "train", "message": "Computing nested CV estimate \u2026"}
