@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- <script src="https://unpkg.com/vconsole@latest/dist/vconsole.min.js"></script>
+    <script>
+    var vConsole = new VConsole();
+    </script> -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#14C38E">
+    <link rel="apple-touch-icon" href="./resource/icon-192.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MedTech · Heart Rate Monitor</title>
+    <meta name="description" content="MedTech rPPG — real-time contactless heart rate monitoring powered by LiteRT AI, running entirely in your browser with full privacy.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- jszip: required by application logic — do not remove -->
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+
+    <style>
+        /* ═══════════════════════════════════════════════════════
+           DESIGN TOKENS
+        ═══════════════════════════════════════════════════════ */
+        :root {
+            /* Core palette */
+            --bg:             #F0F3F8;
+            --surface:        #FFFFFF;
+            --surface-2:      #F7F9FC;
+            --surface-3:      #EEF2F8;
+            --border:         #E4EAF2;
+            --border-strong:  #D0DAE8;
+
+            /* Brand / accent */
+            --green:          #14C38E;
+            --green-dark:     #0CA97A;
+            --green-light:    #D0F5EA;
+            --green-glow:     rgba(20, 195, 142, 0.28);
+            --green-subtle:   rgba(20, 195, 142, 0.10);
+
+            /* Semantic */
+            --red:            #F0526A;
+            --amber:          #F59E0B;
+            --blue:           #3B82F6;
+            --purple:         #8B5CF6;
+
+            /* Text */
+            --text-primary:   #0F172A;
+            --text-secondary: #475569;
+            --text-muted:     #94A3B8;
+            --text-on-green:  #FFFFFF;
+
+            /* Shadows */
+            --shadow-xs:   0 1px 2px rgba(15,23,42,.04);
+            --shadow-sm:   0 1px 4px rgba(15,23,42,.06), 0 1px 2px rgba(15,23,42,.04);
+            --shadow-md:   0 4px 16px rgba(15,23,42,.08), 0 2px 6px rgba(15,23,42,.04);
+            --shadow-lg:   0 12px 40px rgba(15,23,42,.10), 0 4px 16px rgba(15,23,42,.06);
+            --shadow-xl:   0 20px 60px rgba(15,23,42,.12), 0 8px 24px rgba(15,23,42,.08);
+            --shadow-green: 0 8px 28px rgba(20, 195, 142, .26), 0 2px 8px rgba(20, 195, 142, .18);
+
+            /* Radii */
+            --r-xs: 6px;
+            --r-sm: 10px;
+            --r-md: 14px;
+            --r-lg: 18px;
+            --r-xl: 24px;
+            --r-2xl: 32px;
+
+            /* Motion */
+            --ease-out:   cubic-bezier(0.16, 1, 0.3, 1);
+            --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+            --dur-fast:   0.15s;
+            --dur-base:   0.22s;
+            --dur-slow:   0.35s;
+        }
+
+        /* ═══ Global Reset ══════════════════════════════════════ */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: var(--bg);
+            color: var(--text-primary);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            min-height: 100vh;
+            width: 100vw;
+            overflow-x: hidden;
+            overflow-y: auto;
+            user-select: none;
+            -webkit-user-select: none;
+            /* Reserve space for fixed top nav and bottom bar */
+            padding-top: 68px;
+            padding-bottom: 120px;
+            /* Subtle dot-grid background texture */
+            background-image: radial-gradient(circle, rgba(20,195,142,.045) 1px, transparent 1px);
+            background-size: 28px 28px;
+        }
+
+        /* ═══ Keyframe Animations ═══════════════════════════════ */
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            15%       { transform: scale(1.22); }
+            30%       { transform: scale(1); }
+            45%       { transform: scale(1.14); }
+            65%       { transform: scale(1); }
+        }
+        @keyframes pulse-ring {
+            0%   { box-shadow: 0 0 0 0 var(--green-glow); }
+            70%  { box-shadow: 0 0 0 16px rgba(20,195,142,0); }
+            100% { box-shadow: 0 0 0 0 rgba(20,195,142,0); }
+        }
+        @keyframes fadeSlideDown {
+            from { opacity: 0; transform: translateY(-10px) scale(0.98); }
+            to   { opacity: 1; transform: translateY(0)  scale(1); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50%       { opacity: 0.35; }
+        }
+        @keyframes shimmerMove {
+            0%   { background-position: -600px 0; }
+            100% { background-position:  600px 0; }
+        }
+        @keyframes borderGlow {
+            0%, 100% { border-color: rgba(20,195,142,.3); }
+            50%       { border-color: rgba(20,195,142,.7); }
+        }
+
+        /* ═══ Page entrance animation ═══════════════════════════ */
+        #monitor-window  { animation: slideUp var(--dur-slow) var(--ease-out) both; }
+        #bottom-bar      { animation: fadeIn var(--dur-slow) var(--ease-out) .1s both; }
+
+        /* ═══ TOP NAVIGATION BAR ════════════════════════════════ */
+        #retro-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 64px;
+            background: rgba(255, 255, 255, 0.80);
+            backdrop-filter: blur(24px) saturate(1.6);
+            -webkit-backdrop-filter: blur(24px) saturate(1.6);
+            border-bottom: 1px solid rgba(228, 234, 242, 0.80);
+            box-shadow: 0 1px 0 rgba(255,255,255,.9), var(--shadow-sm);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            transition: background var(--dur-base) var(--ease-out),
+                        box-shadow var(--dur-base) var(--ease-out);
+        }
+
+        /* Scrolled state — js-free, just CSS */
+        #retro-nav:hover {
+            background: rgba(255, 255, 255, 0.92);
+        }
+
+        /* ── Logo / Brand ── */
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            text-decoration: none;
+            cursor: default;
+            margin-right: 8px;
+        }
+
+        .nav-brand-icon {
+            width: 34px;
+            height: 34px;
+            background: linear-gradient(135deg, #0EB07E 0%, #14C38E 55%, #1BD8A0 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(20,195,142,.35), 0 1px 2px rgba(20,195,142,.2);
+            transition: transform var(--dur-fast) var(--ease-spring),
+                        box-shadow var(--dur-fast) var(--ease-out);
+            flex-shrink: 0;
+        }
+        .nav-brand-icon:hover {
+            transform: scale(1.08) rotate(-4deg);
+            box-shadow: 0 4px 16px rgba(20,195,142,.45);
+        }
+        .nav-brand-icon svg {
+            width: 18px;
+            height: 18px;
+            color: #fff;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2.2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .nav-brand-name {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--text-primary);
+            letter-spacing: -0.6px;
+            line-height: 1;
+        }
+        .nav-brand-name .accent {
+            color: var(--green);
+        }
+        .nav-brand-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 7px;
+            background: var(--green-subtle);
+            color: var(--green-dark);
+            border-radius: 20px;
+            font-size: 9.5px;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            margin-left: 2px;
+            transition: background var(--dur-fast);
+        }
+
+        /* Nav divider */
+        .nav-divider {
+            width: 1px;
+            height: 22px;
+            background: var(--border);
+            flex-shrink: 0;
+            margin: 0 4px;
+        }
+
+        /* ── Nav left group ── */
+        .nav-group-left {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+
+        /* ── Nav buttons ── */
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 8px 13px;
+            border-radius: var(--r-sm);
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            outline: none;
+            position: relative;
+            transition:
+                background var(--dur-fast) var(--ease-out),
+                color     var(--dur-fast) var(--ease-out),
+                transform var(--dur-fast) var(--ease-spring);
+        }
+        .nav-btn .nav-icon {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            transition: stroke var(--dur-fast);
+        }
+        .nav-btn:hover {
+            background: var(--surface-3);
+            color: var(--text-primary);
+            transform: translateY(-1px);
+        }
+        .nav-btn:active {
+            transform: translateY(0) scale(0.97);
+        }
+
+        /* "About" pressed state — toggled by existing JS */
+        .nav-btn.pressed {
+            background: var(--green-light);
+            color: var(--green-dark);
+        }
+        .nav-btn.pressed .nav-icon { stroke: var(--green-dark); }
+
+        /* ── About dropdown (glassmorphism) ── */
+        #about-menu {
+            display: none;
+            position: absolute;
+            top: 58px;
+            left: 0;
+            width: 360px;
+            max-width: 94vw;
+            background: rgba(255,255,255,.93);
+            backdrop-filter: blur(28px) saturate(1.5);
+            -webkit-backdrop-filter: blur(28px) saturate(1.5);
+            border: 1px solid rgba(228,234,242,.95);
+            border-radius: var(--r-xl);
+            box-shadow: var(--shadow-xl);
+            z-index: 10000;
+            overflow: hidden;
+        }
+        #about-menu.show {
+            display: block;
+            animation: fadeSlideDown var(--dur-base) var(--ease-out);
+        }
+
+        /* Green top stripe on about menu */
+        #about-menu::before {
+            content: '';
+            display: block;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, #0EB07E, #14C38E, #1BD8A0);
+        }
+
+        .menu-content { padding: 20px 22px 22px; }
+
+        .menu-title {
+            font-size: 15px;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            letter-spacing: -0.3px;
+        }
+        .menu-title-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--green-subtle);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .menu-title-icon svg {
+            width: 16px; height: 16px;
+            fill: none; stroke: var(--green); stroke-width: 2.2;
+            stroke-linecap: round; stroke-linejoin: round;
+        }
+
+        .menu-content p {
+            font-size: 13.5px;
+            line-height: 1.70;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+        .menu-content p:last-of-type { margin-bottom: 0; }
+
+        .menu-divider {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 16px 0 12px;
+        }
+        .menu-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .menu-author {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+        .menu-version-badge {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--green-dark);
+            background: var(--green-light);
+            padding: 2px 8px;
+            border-radius: 20px;
+            letter-spacing: 0.5px;
+        }
+
+        /* ── LiteRT brand (right side of nav) ── */
+        .litert-brand {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            padding: 6px 12px;
+            border-radius: var(--r-sm);
+            border: 1px solid transparent;
+            transition:
+                background var(--dur-fast) var(--ease-out),
+                border-color var(--dur-fast),
+                transform var(--dur-fast) var(--ease-spring);
+        }
+        .litert-brand:hover {
+            background: var(--surface-3);
+            border-color: var(--border);
+            transform: translateY(-1px);
+        }
+        .litert-brand:active { transform: scale(0.97); }
+        .litert-text {
+            font-size: 10.5px;
+            color: var(--text-muted);
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+        .litert-logo { height: 21px; width: auto; display: block; }
+
+        /* ── Responsive: mobile nav ── */
+        @media (max-width: 640px) {
+            #retro-nav { padding: 0 14px; }
+            .nav-btn span  { display: none; }
+            .nav-btn { padding: 9px; }
+            .nav-brand-name { font-size: 16px; }
+            .nav-brand-badge { display: none; }
+            .litert-text { display: none; }
+        }
+
+        /* ═══ MAIN LAYOUT ════════════════════════════════════════ */
+        #monitor-window {
+            width: 100%;
+            max-width: 920px;
+            margin: 0 auto;
+            padding: 20px 18px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        /* ── Page Header ── */
+        .sh-page-header {
+            padding: 0 2px;
+            animation: slideUp var(--dur-slow) var(--ease-out) .05s both;
+        }
+        .sh-greeting {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12.5px;
+            color: var(--text-muted);
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            margin-bottom: 4px;
+        }
+        .sh-greeting-dot {
+            width: 6px; height: 6px;
+            background: var(--green);
+            border-radius: 50%;
+            animation: blink 2.4s ease-in-out infinite;
+        }
+        .sh-title {
+            font-size: 24px;
+            font-weight: 900;
+            color: var(--text-primary);
+            letter-spacing: -0.8px;
+            line-height: 1.15;
+        }
+        .sh-title .accent { color: var(--green); }
+
+        /* ── Two-column layout ── */
+        #main-content {
+            display: flex;
+            gap: 18px;
+            align-items: flex-start;
+            flex-wrap: nowrap;
+        }
+
+        /* ═══ LEFT: Visualisation Column ════════════════════════ */
+        #vis-col {
+            width: 300px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            animation: slideUp var(--dur-slow) var(--ease-out) .10s both;
+        }
+
+        .sh-section-label {
+            font-size: 10.5px;
+            font-weight: 800;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .sh-section-label::before {
+            content: '';
+            width: 14px; height: 2px;
+            background: var(--green);
+            border-radius: 1px;
+        }
+
+        /* PSD card */
+        #psd-frame {
+            height: 150px;
+            position: relative;
+            flex-shrink: 0;
+            border-radius: var(--r-xl);
+            overflow: hidden;
+            background: #07101F;
+            box-shadow: var(--shadow-md);
+            border: 1px solid rgba(255,255,255,.04);
+            transition: box-shadow var(--dur-base) var(--ease-out),
+                        transform var(--dur-base) var(--ease-out);
+        }
+        #psd-frame:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
+        }
+        #psd-frame canvas { display: block; width: 100%; height: 100%; }
+        #psd-frame::before {
+            content: 'FREQUENCY SPECTRUM';
+            position: absolute;
+            top: 11px; left: 13px;
+            font-size: 8.5px;
+            font-weight: 800;
+            letter-spacing: 1.8px;
+            color: rgba(20,195,142,.75);
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        /* NN Visualisation card */
+        #nn-frame {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: var(--surface);
+            border-radius: var(--r-xl);
+            padding: 14px;
+            box-shadow: var(--shadow-md);
+            min-height: 220px;
+            border: 1px solid var(--border);
+            transition: box-shadow var(--dur-base) var(--ease-out),
+                        transform var(--dur-base) var(--ease-out);
+        }
+        #nn-frame:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
+        }
+
+        /* SSM Tabs — segmented pill */
+        .layer-tabs {
+            display: flex;
+            gap: 3px;
+            background: var(--surface-3);
+            border-radius: 9px;
+            padding: 3px;
+            flex-shrink: 0;
+        }
+        .layer-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            border-radius: 7px;
+            padding: 5px 0;
+            text-align: center;
+            font-size: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            color: var(--text-muted);
+            font-family: 'Inter', sans-serif;
+            letter-spacing: 0.4px;
+            transition:
+                background var(--dur-fast) var(--ease-out),
+                color     var(--dur-fast) var(--ease-out),
+                box-shadow var(--dur-fast) var(--ease-out),
+                transform  var(--dur-fast) var(--ease-spring);
+        }
+        .layer-btn:hover { color: var(--text-secondary); }
+        .layer-btn:active, .layer-btn.active {
+            background: var(--surface);
+            color: var(--green);
+            box-shadow: var(--shadow-sm);
+            transform: none;
+        }
+
+        /* NN Grid */
+        #nn-grid {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 0.95fr 1.05fr;
+            gap: 6px;
+            background: transparent;
+            padding: 0;
+        }
+        .grid-cell {
+            position: relative;
+            background: #07101F;
+            overflow: hidden;
+            border-radius: 9px;
+            border: 1px solid rgba(255,255,255,.04);
+            transition: transform var(--dur-fast) var(--ease-out);
+        }
+        .grid-cell:hover { transform: scale(1.02); }
+        .full-width { grid-column: 1 / -1; }
+        .cell-label {
+            position: absolute;
+            top: 6px; left: 8px;
+            background: rgba(20,195,142,.16);
+            color: var(--green);
+            font-size: 8.5px;
+            font-weight: 800;
+            letter-spacing: 1.2px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            z-index: 10;
+            text-transform: uppercase;
+        }
+
+        /* ═══ RIGHT: Monitor Column ══════════════════════════════ */
+        #monitor-col {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            min-width: 0;
+            animation: slideUp var(--dur-slow) var(--ease-out) .14s both;
+        }
+
+        /* ── Stats / Metric Cards Row ── */
+        #stats-group {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            padding: 0;
+            background: transparent;
+            border: none;
+            flex-shrink: 0;
+        }
+
+        .stat-item {
+            background: var(--surface);
+            border-radius: var(--r-lg);
+            padding: 14px 8px 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+            transition:
+                transform   var(--dur-fast) var(--ease-spring),
+                box-shadow  var(--dur-fast) var(--ease-out),
+                border-color var(--dur-fast);
+            cursor: default;
+        }
+        .stat-item:hover {
+            transform: translateY(-3px) scale(1.01);
+            box-shadow: var(--shadow-md);
+            border-color: var(--border-strong);
+        }
+        .stat-item:active { transform: translateY(-1px) scale(0.99); }
+
+        /* ★ HR Card — signature green gradient */
+        .stat-item:first-child {
+            background: linear-gradient(145deg, #0CA87A 0%, #14C38E 50%, #18D49A 100%);
+            border: 1px solid rgba(20,195,142,.2);
+            box-shadow: var(--shadow-green);
+            animation: borderGlow 3s ease-in-out infinite;
+        }
+        .stat-item:first-child:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 12px 36px rgba(20,195,142,.35), 0 4px 12px rgba(20,195,142,.2);
+        }
+        .stat-item:first-child .stat-label { color: rgba(255,255,255,.72); }
+        .stat-item:first-child .stat-value-box { background: transparent; border: none; }
+        .stat-item:first-child .stat-val { color: #fff; }
+
+        .stat-label {
+            font-size: 9.5px;
+            font-weight: 700;
+            letter-spacing: 0.7px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            text-align: center;
+            display: block;
+        }
+        .stat-value-box {
+            background: transparent;
+            border: none;
+            padding: 0;
+            height: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .stat-val {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--text-primary);
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -0.8px;
+            transition: color var(--dur-fast);
+        }
+        .stat-val.active { color: var(--green); }
+
+        /* Heartbeat icon after HR value */
+        .stat-item:first-child .stat-val::after {
+            content: ' ♥';
+            font-size: 13px;
+            animation: heartbeat 1.3s ease infinite;
+            display: inline-block;
+            opacity: .9;
+        }
+
+        /* ── Camera Feed ── */
+        #video-frame {
+            width: 100%;
+            aspect-ratio: 4 / 3;
+            position: relative;
+            background: #07101F;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: var(--r-xl);
+            box-shadow: var(--shadow-lg);
+            border: 1px solid rgba(255,255,255,.04);
+            transition: box-shadow var(--dur-base) var(--ease-out);
+        }
+        #video-frame:hover { box-shadow: var(--shadow-xl); }
+
+        /* LIVE badge */
+        #video-frame::after {
+            content: '● LIVE';
+            position: absolute;
+            top: 14px; right: 14px;
+            background: rgba(240,82,106,.14);
+            color: var(--red);
+            font-size: 9.5px;
+            font-weight: 800;
+            letter-spacing: 1.2px;
+            padding: 4px 11px;
+            border-radius: 20px;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(240,82,106,.22);
+            pointer-events: none;
+            z-index: 10;
+            animation: blink 2s ease-in-out infinite;
+        }
+
+        canvas.display-layer {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            min-width: 100%;
+            min-height: 100%;
+            object-fit: cover;
+        }
+
+        /* ── Wave / Signal Frame (rPPG + Start btn) ── */
+        #wave-frame {
+            border-radius: var(--r-xl);
+            background: #07101F;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            height: 96px;
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+            border: 1px solid rgba(255,255,255,.04);
+            transition: box-shadow var(--dur-base) var(--ease-out);
+        }
+        #wave-frame:hover { box-shadow: var(--shadow-lg); }
+
+        #wave-frame::before {
+            content: 'rPPG SIGNAL';
+            position: absolute;
+            bottom: 9px; left: 13px;
+            font-size: 8.5px;
+            font-weight: 800;
+            letter-spacing: 1.8px;
+            color: rgba(20,195,142,.55);
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        /* ── Start / Stop Button ── */
+        #largeStartBtn {
+            position: absolute;
+            z-index: 50;
+            padding: 0 36px;
+            height: 46px;
+            background: linear-gradient(135deg, #0CA87A 0%, #14C38E 60%, #18D49A 100%);
+            background-size: 200% 200%;
+            color: #fff;
+            font-weight: 700;
+            font-size: 14px;
+            letter-spacing: 0.2px;
+            border: none;
+            border-radius: 23px;
+            box-shadow: 0 4px 20px rgba(20,195,142,.45), 0 2px 6px rgba(20,195,142,.25);
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            transition:
+                transform   var(--dur-fast) var(--ease-spring),
+                box-shadow  var(--dur-fast) var(--ease-out),
+                background-position var(--dur-slow) var(--ease-out),
+                opacity     var(--dur-fast);
+            animation: pulse-ring 2.2s ease-out infinite;
+        }
+        #largeStartBtn:hover:not(:disabled) {
+            transform: scale(1.06) translateY(-1px);
+            box-shadow: 0 8px 28px rgba(20,195,142,.55), 0 3px 10px rgba(20,195,142,.3);
+            background-position: right center;
+            animation: none;
+        }
+        #largeStartBtn:active:not(:disabled) {
+            transform: scale(0.96);
+            box-shadow: 0 2px 10px rgba(20,195,142,.35);
+        }
+        #largeStartBtn:disabled {
+            background: linear-gradient(135deg, #94A3B8, #CBD5E1);
+            box-shadow: none;
+            cursor: wait;
+            animation: none;
+            opacity: .82;
+        }
+
+        /* ═══ BOTTOM BAR ════════════════════════════════════════ */
+        #bottom-bar {
+            position: fixed;
+            bottom: 0; left: 0;
+            width: 100vw;
+            height: 112px;
+            z-index: 1000;
+            display: flex;
+            gap: 12px;
+            padding: 10px 20px;
+            background: rgba(240, 243, 248, 0.85);
+            backdrop-filter: blur(24px) saturate(1.5);
+            -webkit-backdrop-filter: blur(24px) saturate(1.5);
+            border-top: 1px solid rgba(228, 234, 242, .85);
+            box-shadow: 0 -4px 24px rgba(15,23,42,.07), 0 -1px 0 rgba(255,255,255,.8);
+        }
+
+        #trend-wrapper {
+            flex: 1;
+            height: 100%;
+            display: flex;
+            gap: 0;
+            background: #07101F;
+            position: relative;
+            border-radius: var(--r-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid rgba(255,255,255,.04);
+            transition: box-shadow var(--dur-base) var(--ease-out);
+        }
+        #trend-wrapper:hover { box-shadow: var(--shadow-md); }
+
+        .trend-y-axis {
+            width: 34px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-sizing: border-box;
+            border-right: 1px solid rgba(255,255,255,.05);
+        }
+        .axis-label {
+            position: absolute;
+            right: 4px;
+            font-size: 9.5px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+            color: rgba(255,255,255,.30);
+            transform: translateY(50%);
+        }
+
+        #trend-container {
+            flex: 1;
+            height: 100%;
+            background: transparent;
+            position: relative;
+        }
+        #trend-title {
+            position: absolute;
+            top: 7px; left: 9px;
+            color: rgba(20,195,142,.65);
+            font-size: 8.5px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 800;
+            letter-spacing: 1.8px;
+            text-transform: uppercase;
+            pointer-events: none;
+        }
+
+        /* Save button */
+        #save-container {
+            width: 80px;
+            display: flex;
+            flex-direction: column;
+        }
+        #saveBtn {
+            width: 100%;
+            height: 100%;
+            font-weight: 700;
+            font-size: 10.5px;
+            background: var(--surface);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--r-lg);
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            box-shadow: var(--shadow-sm);
+            font-family: 'Inter', sans-serif;
+            letter-spacing: 0.3px;
+            transition:
+                background var(--dur-fast) var(--ease-out),
+                color      var(--dur-fast) var(--ease-out),
+                border-color var(--dur-fast),
+                box-shadow var(--dur-fast) var(--ease-out),
+                transform  var(--dur-fast) var(--ease-spring);
+        }
+        #saveBtn:hover {
+            background: var(--green-light);
+            color: var(--green-dark);
+            border-color: rgba(20,195,142,.4);
+            box-shadow: 0 4px 14px rgba(20,195,142,.18);
+            transform: translateY(-2px);
+        }
+        #saveBtn:active { transform: scale(0.95) translateY(0); }
+
+        .save-icon {
+            width: 20px; height: 20px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            transition: stroke var(--dur-fast);
+        }
+
+        /* ═══ Global canvas rule ════════════════════════════════ */
+        canvas { width: 100%; height: 100%; display: block; }
+
+        /* ═══ RESPONSIVE ════════════════════════════════════════ */
+        @media (max-width: 900px) {
+            #monitor-window  { padding: 14px 12px 0; }
+            #main-content    { flex-direction: column; }
+            #vis-col         { width: 100%; display: none; }
+            #stats-group     { grid-template-columns: repeat(5, 1fr); gap: 8px; }
+            .stat-val        { font-size: 18px; }
+            .sh-title        { font-size: 20px; }
+        }
+
+        @media (max-width: 520px) {
+            body             { padding-bottom: 110px; }
+            #stats-group     { grid-template-columns: 1fr 1fr; }
+            .stat-item:first-child {
+                grid-column: 1 / -1;
+                flex-direction: row;
+                gap: 14px;
+                padding: 16px 20px;
+            }
+            .stat-item:first-child .stat-val { font-size: 34px; }
+            .stat-val        { font-size: 20px; }
+            #bottom-bar      { height: 96px; padding: 8px 12px; }
+            #save-container  { width: 68px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════
+     TOP NAVIGATION BAR
+     ─ id="retro-nav", id="btn-about", id="about-menu" preserved
+════════════════════════════════════════════════════════════ -->
+<nav id="retro-nav">
+
+    <!-- Brand / Logo -->
+    <div class="nav-group-left">
+        <div class="nav-brand">
+            <!-- Inline SVG heart-pulse icon — no external library -->
+            <div class="nav-brand-icon">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M3 12h3l3-8 4 16 3-8h5"/>
+                </svg>
+            </div>
+            <span class="nav-brand-name">Med<span class="accent">Tech</span></span>
+            <span class="nav-brand-badge">rPPG</span>
+        </div>
+
+        <div class="nav-divider" aria-hidden="true"></div>
+
+        <!-- About button — id and JS behavior kept exactly -->
+        <div style="position: relative;">
+            <div id="btn-about" class="nav-btn" role="button" aria-haspopup="true" tabindex="0">
+                <!-- Heroicons-style info-circle SVG -->
+                <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="8" stroke-width="2.5" stroke-linecap="round"/>
+                    <line x1="12" y1="12" x2="12" y2="16"/>
+                </svg>
+                <span>About</span>
+            </div>
+
+            <!-- About dropdown — id preserved for JS -->
+            <div id="about-menu" role="dialog" aria-label="About MedTech">
+                <div class="menu-content">
+                    <div class="menu-title">
+                        <div class="menu-title-icon">
+                            <!-- Heart icon -->
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                            </svg>
+                        </div>
+                        MedTech Demo
+                    </div>
+                    <p>
+                        MedTech leverages State Space Models (SSMs) to model heart dynamics as continuous-time controlled ODEs, ensuring robust handling of irregular sampling and precise capture of physiological signals.
+                    </p>
+                    <p>
+                        Optimized for edge inference, the model is ultra-lightweight (4 MB) with latency as low as 5 ms — running entirely in your browser.
+                    </p>
+                    <p>
+                        Powered by LiteRT. <strong>Privacy guaranteed — zero data upload.</strong>
+                    </p>
+                    <hr class="menu-divider">
+                    <div class="menu-footer">
+                        <span class="menu-author">Author: Kegang Wang</span>
+                        <span class="menu-version-badge">V1.0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Paper link — retained, GitHub link removed per requirements -->
+        <a href="https://github.com/user-attachments/files/24302692/FacePhys2025.pdf"
+           target="_blank" rel="noopener noreferrer" class="nav-btn" title="Research Paper">
+            <!-- Lucide-style file-text SVG -->
+            <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <polyline points="10 9 9 9 8 9"/>
+            </svg>
+            <span>Paper</span>
+        </a>
+    </div>
+
+    <!-- LiteRT brand — right side -->
+    <a href="https://ai.google.dev/edge" target="_blank" rel="noopener noreferrer" class="litert-brand" title="Powered by LiteRT">
+        <span class="litert-text">Powered by</span>
+        <img src="resource/litert_logo.png" alt="LiteRT" class="litert-logo">
+    </a>
+
+</nav>
+
+<!-- Hidden video — untouched, required by JS -->
+<video id="videoInput" playsinline muted style="display:none"></video>
+
+<!-- ═══════════════════════════════════════════════════════════
+     MAIN APP WINDOW  — id="monitor-window" preserved
+════════════════════════════════════════════════════════════ -->
+<div id="monitor-window">
+
+    <!-- Page Header -->
+    <div class="sh-page-header">
+        <p class="sh-greeting">
+            <span class="sh-greeting-dot" aria-hidden="true"></span>
+            Real-time contactless monitoring
+        </p>
+        <h1 class="sh-title">Heart Rate <span class="accent">Dashboard</span></h1>
+    </div>
+
+    <!-- ── Two-Column Layout — id="main-content" preserved ── -->
+    <div id="main-content">
+
+        <!-- ── LEFT: Visualisations — id="vis-col" preserved ── -->
+        <div id="vis-col">
+
+            <p class="sh-section-label">Signal Analysis</p>
+
+            <!-- Frequency Spectrum — id="psd-frame" preserved -->
+            <div id="psd-frame">
+                <canvas id="psdCanvas"></canvas>
+            </div>
+
+            <!-- Neural Net Visualisation — id="nn-frame" preserved -->
+            <div id="nn-frame">
+                <!-- SSM tabs — .layer-tabs, .layer-btn, data-layer preserved -->
+                <div class="layer-tabs" role="tablist" aria-label="SSM Layers">
+                    <div class="layer-btn active" data-layer="0" role="tab">SSM1</div>
+                    <div class="layer-btn" data-layer="1" role="tab">SSM2</div>
+                    <div class="layer-btn" data-layer="2" role="tab">SSM3</div>
+                    <div class="layer-btn" data-layer="3" role="tab">SSM4</div>
+                    <div class="layer-btn" data-layer="4" role="tab">PROJ</div>
+                </div>
+
+                <!-- id="nn-grid", .grid-cell, .full-width, .cell-label preserved -->
+                <div id="nn-grid">
+                    <div class="grid-cell">
+                        <span class="cell-label">ROI</span>
+                        <canvas id="cropDisplayCanvas"></canvas>
+                    </div>
+                    <div class="grid-cell">
+                        <span class="cell-label">ATTN</span>
+                        <canvas id="heatmapCanvas"></canvas>
+                    </div>
+                    <div class="grid-cell full-width">
+                        <span class="cell-label">Heart State</span>
+                        <canvas id="trajCanvas"></canvas>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /#vis-col -->
+
+        <!-- ── RIGHT: Monitor — id="monitor-col" preserved ── -->
+        <div id="monitor-col">
+
+            <!-- Metric Cards — id="stats-group", .stat-item, .stat-label,
+                 .stat-value-box, .stat-val, id="hrVal" etc. all preserved -->
+            <div id="stats-group">
+                <div class="stat-item">
+                    <span class="stat-label">HR (BPM)</span>
+                    <div class="stat-value-box">
+                        <span id="hrVal" class="stat-val">--</span>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">SQI</span>
+                    <div class="stat-value-box">
+                        <span id="sqiVal" class="stat-val">0.00</span>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Latency</span>
+                    <div class="stat-value-box">
+                        <span id="latencyVal" class="stat-val">0.0</span>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">FPS</span>
+                    <div class="stat-value-box">
+                        <span id="fpsVal" class="stat-val">0</span>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Frame</span>
+                    <div class="stat-value-box">
+                        <span id="frameVal" class="stat-val">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Camera Feed — id="video-frame", id="previewCanvas",
+                 id="overlayCanvas", class="display-layer" all preserved -->
+            <div id="video-frame">
+                <canvas id="previewCanvas" class="display-layer"></canvas>
+                <canvas id="overlayCanvas" class="display-layer"></canvas>
+            </div>
+
+            <!-- rPPG Signal + CTA — id="wave-frame", id="largeStartBtn",
+                 id="plotCanvas" all preserved -->
+            <div id="wave-frame">
+                <button id="largeStartBtn" disabled>Loading System...</button>
+                <canvas id="plotCanvas"></canvas>
+            </div>
+
+        </div><!-- /#monitor-col -->
+
+    </div><!-- /#main-content -->
+</div><!-- /#monitor-window -->
+
+<!-- ═══════════════════════════════════════════════════════════
+     BOTTOM BAR — id="bottom-bar", id="trend-wrapper",
+     id="trend-container", id="trend-title", id="trendCanvas",
+     .trend-y-axis, .axis-label, id="save-container",
+     id="saveBtn" all preserved
+════════════════════════════════════════════════════════════ -->
+<div id="bottom-bar">
+    <div id="trend-wrapper">
+        <div class="trend-y-axis" aria-hidden="true">
+            <span class="axis-label" style="bottom: 71.4%">140</span>
+            <span class="axis-label" style="bottom: 42.8%">100</span>
+            <span class="axis-label" style="bottom: 14.2%">60</span>
+        </div>
+        <div id="trend-container">
+            <span id="trend-title">HR TREND</span>
+            <canvas id="trendCanvas"></canvas>
+        </div>
+    </div>
+    <div id="save-container">
+        <!-- Save icon: Lucide download arrow — inline SVG, no CDN -->
+        <button id="saveBtn" title="Save data as ZIP">
+            <svg class="save-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            <span>SAVE</span>
+            <span style="font-size:8.5px; font-weight:600; opacity:.6;">(.ZIP)</span>
+        </button>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCRIPTS — ORDER AND CONTENT STRICTLY PRESERVED
+════════════════════════════════════════════════════════════ -->
+<script type="module" src="./main.js"></script>
+
+<script>
+    const aboutBtn = document.getElementById('btn-about');
+    const aboutMenu = document.getElementById('about-menu');
+
+    aboutBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = aboutMenu.classList.contains('show');
+        if (isOpen) {
+            aboutMenu.classList.remove('show');
+            aboutBtn.classList.remove('pressed');
+        } else {
+            aboutMenu.classList.add('show');
+            aboutBtn.classList.add('pressed');
+        }
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!aboutMenu.contains(e.target) && !aboutBtn.contains(e.target)) {
+            aboutMenu.classList.remove('show');
+            aboutBtn.classList.remove('pressed');
+        }
+    });
+</script>
+</body>
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then((registration) => {
+                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                })
+                .catch((err) => {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+        });
+    }
+</script>
+</html>
