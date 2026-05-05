@@ -1,0 +1,336 @@
+/* 
+  2026+ Enterprise Medical AI Design System
+  Strict CSS-First Implementation (No Tailwind for core components)
+  Source of Truth: dashboard.css
+*/
+
+:root {
+  /* --- 1. Medical Neutral Palette (Strict: No #FFFFFF) --- */
+  /* Light Mode */
+  --sys-bg-base: #f8fafc; /* Soft Slate-Green Base */
+  --sys-bg-surface: #ffffff; /* We will tint this with a very soft slate/green in practice via backgrounds */
+  --sys-bg-subtle: #f1f5f9;
+  
+  /* Medical Emerald Accents */
+  --sys-color-primary: #059669;
+  --sys-color-primary-hover: #047857;
+  --sys-color-primary-subtle: #d1fae5;
+  
+  /* Text Neutrals */
+  --sys-text-h1: #0f172a;
+  --sys-text-h2: #1e293b;
+  --sys-text-body: #334155;
+  --sys-text-muted: #64748b;
+  --sys-text-on-primary: #ffffff;
+
+  /* Border & Dividers */
+  --sys-border: #e2e8f0;
+  --sys-border-subtle: #f1f5f9;
+
+  /* --- 2. Typography System --- */
+  --sys-font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --sys-font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* --- 3. Spacing System --- */
+  --sys-spacing-xs: 0.5rem;
+  --sys-spacing-sm: 0.75rem;
+  --sys-spacing-md: 1rem;
+  --sys-spacing-lg: 1.5rem;
+  --sys-spacing-xl: 2rem;
+  --sys-card-padding: 1.25rem;
+
+  /* --- 4. Elevation System (Strictly 3 Levels) --- */
+  --sys-shadow-low: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+  --sys-shadow-medium: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+  --sys-shadow-high: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.08);
+  --sys-shadow-primary: 0 10px 15px -3px rgba(5, 150, 105, 0.15);
+
+  /* --- 5. Enterprise Motion System --- */
+  --sys-motion-duration: 300ms;
+  --sys-motion-easing: cubic-bezier(0.4, 0, 0.2, 1); /* ease-in-out */
+  
+  /* Layout Constants */
+  --sidebar-width: 280px;
+  --sidebar-collapsed-width: 80px;
+  --topbar-height: 72px;
+}
+
+/* Dark Mode Overrides */
+.dark {
+  --sys-bg-base: #020617;
+  --sys-bg-surface: #0f172a;
+  --sys-bg-subtle: #1e293b;
+  
+  --sys-text-h1: #f8fafc;
+  --sys-text-h2: #f1f5f9;
+  --sys-text-body: #cbd5e1;
+  --sys-text-muted: #94a3b8;
+  
+  --sys-border: #1e293b;
+  --sys-border-subtle: #334155;
+
+  --sys-shadow-low: 0 1px 3px 0 rgba(0, 0, 0, 0.3);
+  --sys-shadow-medium: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+  --sys-shadow-high: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+}
+
+/* Global Base Styles */
+.dashboard-admin-root {
+  background-color: var(--sys-bg-base);
+  color: var(--sys-text-body);
+  font-family: var(--sys-font-sans);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Global Reset for unwanted borders/outlines */
+button, 
+[role="button"],
+.ph, 
+i {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none;
+}
+
+button:focus, 
+[role="button"]:focus {
+  outline: none !important;
+}
+
+/* --- Core Structural Classes --- */
+
+.sys-dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: var(--sys-spacing-xl);
+  width: 100%;
+}
+
+.sys-card {
+  background-color: var(--sys-bg-surface);
+  border-radius: 1.25rem;
+  border: 1px solid var(--sys-border);
+  padding: var(--sys-card-padding);
+  transition: transform var(--sys-motion-duration) var(--sys-motion-easing),
+              box-shadow var(--sys-motion-duration) var(--sys-motion-easing),
+              border-color var(--sys-motion-duration) var(--sys-motion-easing);
+  overflow: hidden;
+  position: relative;
+}
+
+.sys-elevation-low { box-shadow: var(--sys-shadow-low); }
+.sys-elevation-medium { box-shadow: var(--sys-shadow-medium); }
+.sys-elevation-high { box-shadow: var(--sys-shadow-high); }
+
+.sys-card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--sys-shadow-high);
+  border-color: var(--sys-color-primary);
+}
+
+/* --- Typography Classes --- */
+
+.sys-text-h1 {
+  font-size: 2.25rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: var(--sys-text-h1);
+  line-height: 1.1;
+}
+
+.sys-text-h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--sys-text-h2);
+  line-height: 1.3;
+}
+
+.sys-text-metric {
+  font-family: var(--sys-font-sans);
+  font-variant-numeric: tabular-nums;
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--sys-text-h1);
+}
+
+.sys-text-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--sys-text-muted);
+}
+
+.sys-text-body {
+  font-size: 0.9375rem;
+  color: var(--sys-text-body);
+}
+
+.sys-text-muted {
+  font-size: 0.875rem;
+  color: var(--sys-text-muted);
+}
+
+/* --- Transition Helpers --- */
+.sys-transition {
+  transition: all var(--sys-motion-duration) var(--sys-motion-easing);
+}
+
+/* --- Layout System Refined --- */
+.main-wrapper {
+  margin-left: var(--sidebar-width);
+  min-height: 100vh;
+  width: calc(100% - var(--sidebar-width));
+  display: flex;
+  flex-direction: column;
+  transition: margin var(--sys-motion-duration) var(--sys-motion-easing),
+              width var(--sys-motion-duration) var(--sys-motion-easing);
+}
+
+.main-wrapper.collapsed {
+  margin-left: var(--sidebar-collapsed-width);
+  width: calc(100% - var(--sidebar-collapsed-width));
+}
+
+.navbar-header {
+  height: var(--topbar-height);
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: rgba(var(--sys-bg-base), 0.8);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--sys-border);
+  padding: 0 var(--sys-spacing-xl);
+  display: flex;
+  align-items: center;
+  justify-content: center; /* Ensure inner container can be centered if needed, but Topbar uses w-full */
+}
+
+.page-content {
+  padding: var(--sys-spacing-xl);
+  flex: 1;
+}
+
+/* Sidebar Fixes */
+.two-col-sidebar {
+  width: var(--sidebar-width);
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 50;
+  background: var(--sys-bg-surface);
+  border-right: 1px solid var(--sys-border);
+  transition: width var(--sys-motion-duration) var(--sys-motion-easing);
+  overflow: hidden;
+  display: flex;
+}
+
+.two-col-sidebar.collapsed {
+  width: var(--sidebar-collapsed-width);
+}
+
+.sidebar-left {
+  width: var(--sidebar-collapsed-width);
+  height: 100%;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-right: 1px solid var(--sys-border);
+  background: var(--sys-bg-surface);
+}
+
+.sidebar-right {
+  width: calc(var(--sidebar-width) - var(--sidebar-collapsed-width));
+  height: 100%;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+  overflow-y: auto;
+  background: var(--sys-bg-surface);
+}
+
+.two-col-sidebar.collapsed .sidebar-right {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* --- Component Specifics (Clinical UI) --- */
+
+.clinical-hero {
+  grid-column: span 12;
+  background: linear-gradient(135deg, var(--sys-color-primary) 0%, #065f46 100%);
+  color: white;
+  border: none;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 160px;
+}
+
+.clinical-hero .sys-text-h1, 
+.clinical-hero .sys-text-h2,
+.clinical-hero .sys-text-body {
+  color: white;
+}
+
+.medical-btn-primary {
+  background-color: var(--sys-color-primary);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  font-weight: 700;
+  font-size: 0.875rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: background-color var(--sys-motion-duration) var(--sys-motion-easing);
+  cursor: pointer;
+  border: none;
+}
+
+.medical-btn-primary:hover {
+  background-color: var(--sys-color-primary-hover);
+}
+
+.medical-btn-secondary {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+  backdrop-filter: blur(8px);
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  font-weight: 700;
+  font-size: 0.875rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: background-color var(--sys-motion-duration) var(--sys-motion-easing);
+  cursor: pointer;
+}
+
+.medical-btn-secondary:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--sys-border);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--sys-text-muted);
+}

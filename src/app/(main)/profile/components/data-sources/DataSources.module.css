@@ -1,0 +1,115 @@
+.container {
+  display: flex;
+  flex-direction: column;
+}
+
+.title {
+  font-size: 34px;
+  font-weight: 800;
+  color: #1e7e34;
+  letter-spacing: -1.5px;
+  margin-bottom: 40px;
+}
+
+.section {
+  margin-bottom: 48px;
+}
+
+.sectionLabel {
+  font-size: 13px;
+  font-weight: 800;
+  color: #5c727d;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 20px;
+  padding-left: 12px;
+}
+
+.sourceList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.connectedItem, .availableItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 32px;
+  background-color: #ffffff;
+  border-radius: 24px;
+  border: 1px solid rgba(30, 126, 52, 0.06);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.01);
+}
+
+.connectedItem:hover, .availableItem:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(30, 126, 52, 0.05);
+  border-color: rgba(52, 199, 89, 0.2);
+}
+
+.sourceName {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1e7e34;
+}
+
+.statusWrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.statusText {
+  font-size: 16px;
+  color: #34C759;
+  font-weight: 700;
+}
+
+.statusDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #34C759;
+  box-shadow: 0 0 12px rgba(52, 199, 89, 0.5);
+}
+
+.connectText {
+  font-size: 16px;
+  color: #ccd6d8;
+  font-weight: 700;
+  transition: color 0.3s ease;
+}
+
+.availableItem:hover .connectText {
+  color: #34C759;
+}
+
+.syncButton {
+  appearance: none;
+  border: none;
+  width: 100%;
+  padding: 24px;
+  font-size: 20px;
+  font-weight: 800;
+  border-radius: 24px;
+  background-color: #1e7e34;
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 10px 25px rgba(30, 126, 52, 0.2);
+}
+
+.syncButton:hover {
+  background-color: #34C759;
+  transform: translateY(-2px);
+}
+
+.syncInfo {
+  font-size: 14px;
+  color: #5c727d;
+  text-align: center;
+  margin-top: 20px;
+  font-weight: 600;
+}

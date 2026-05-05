@@ -1,0 +1,332 @@
+/* Samsung Health 2026 Overlay Styles */
+/* Layer these on top of Bootstrap to achieve Samsung Health aesthetic */
+
+.samsung-health-dashboard {
+    --sh-transition: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Glassmorphic Card Styling */
+.sh-glass-card {
+    background: var(--sh-card-bg);
+    backdrop-filter: blur(var(--sh-card-blur));
+    -webkit-backdrop-filter: blur(var(--sh-card-blur));
+    border-radius: var(--sh-card-radius);
+    box-shadow: var(--sh-shadow-soft);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: transform 0.3s var(--sh-transition), box-shadow 0.3s var(--sh-transition);
+}
+
+.sh-glass-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+}
+
+.dark .sh-glass-card {
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.dark .sh-glass-card:hover {
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+}
+
+/* Activity Rings Container */
+.sh-rings-container {
+    position: relative;
+    width: 280px;
+    height: 280px;
+    margin: 0 auto;
+}
+
+.sh-rings-container svg {
+    transform: rotate(-90deg);
+}
+
+/* Ring animation keyframes */
+@keyframes ring-draw {
+    from {
+        stroke-dashoffset: var(--circumference);
+    }
+    to {
+        stroke-dashoffset: var(--offset);
+    }
+}
+
+/* Bottom Navigation Samsung Style */
+.sh-bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    padding: 12px 16px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom));
+    z-index: 1000;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.dark .sh-bottom-nav {
+    background: rgba(20, 20, 20, 0.95);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+@media (min-width: 1024px) {
+    .sh-bottom-nav {
+        display: none;
+    }
+}
+
+/* Modern Sidebar Styling */
+.sh-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 260px;
+    background: var(--sh-card-bg);
+    backdrop-filter: blur(var(--sh-card-blur));
+    -webkit-backdrop-filter: blur(var(--sh-card-blur));
+    border-right: 1px solid rgba(0, 0, 0, 0.05);
+    z-index: 1050;
+    overflow-y: auto;
+    overflow-x: hidden;
+    transition: transform 0.3s var(--sh-transition), width 0.3s var(--sh-transition);
+}
+
+.dark .sh-sidebar {
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+@media (max-width: 1023px) {
+    .sh-sidebar {
+        transform: translateX(-100%);
+    }
+
+    .sh-sidebar.open {
+        transform: translateX(0);
+    }
+}
+
+/* Sidebar Navigation Items */
+.sh-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    margin: 4px 12px;
+    border-radius: 14px;
+    color: var(--muted-foreground);
+    font-weight: 500;
+    font-size: 14px;
+    transition: all 0.2s var(--sh-transition);
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    width: calc(100% - 24px);
+    text-align: left;
+}
+
+.sh-nav-item:hover {
+    background: rgba(52, 199, 89, 0.08);
+    color: var(--sh-brand);
+}
+
+.sh-nav-item.active {
+    background: rgba(52, 199, 89, 0.12);
+    color: var(--sh-brand);
+    font-weight: 600;
+    border-left: 3px solid var(--sh-brand);
+    margin-left: 9px;
+}
+
+/* Header Styling */
+.sh-header {
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 260px;
+    height: 64px;
+    background: var(--sh-card-bg);
+    backdrop-filter: blur(var(--sh-card-blur));
+    -webkit-backdrop-filter: blur(var(--sh-card-blur));
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    z-index: 1040;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    transition: left 0.3s var(--sh-transition);
+}
+
+.dark .sh-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+@media (max-width: 1023px) {
+    .sh-header {
+        left: 0;
+    }
+}
+
+/* Content Area */
+.sh-content {
+    margin-left: 260px;
+    margin-top: 64px;
+    min-height: calc(100vh - 64px);
+    padding: 24px;
+    transition: margin-left 0.3s var(--sh-transition);
+}
+
+@media (max-width: 1023px) {
+    .sh-content {
+        margin-left: 0;
+        padding-bottom: calc(80px + env(safe-area-inset-bottom));
+    }
+}
+
+/* Biometric Color Classes */
+.sh-color-steps { color: var(--sh-steps); }
+.sh-color-calories { color: var(--sh-calories); }
+.sh-color-exercise { color: var(--sh-exercise); }
+.sh-color-heart-rate { color: var(--sh-heart-rate); }
+.sh-color-spo2 { color: var(--sh-spo2); }
+.sh-color-blood-pressure { color: var(--sh-blood-pressure); }
+.sh-color-sleep { color: var(--sh-sleep); }
+.sh-color-stress { color: var(--sh-stress); }
+.sh-color-brand { color: var(--sh-brand); }
+
+.sh-bg-steps { background-color: var(--sh-steps); }
+.sh-bg-calories { background-color: var(--sh-calories); }
+.sh-bg-exercise { background-color: var(--sh-exercise); }
+.sh-bg-heart-rate { background-color: var(--sh-heart-rate); }
+.sh-bg-spo2 { background-color: var(--sh-spo2); }
+.sh-bg-blood-pressure { background-color: var(--sh-blood-pressure); }
+.sh-bg-sleep { background-color: var(--sh-sleep); }
+.sh-bg-stress { background-color: var(--sh-stress); }
+.sh-bg-brand { background-color: var(--sh-brand); }
+
+/* Skeleton Loading */
+.sh-skeleton {
+    background: linear-gradient(
+            90deg,
+            rgba(0, 0, 0, 0.06) 25%,
+            rgba(0, 0, 0, 0.1) 50%,
+            rgba(0, 0, 0, 0.06) 75%
+    );
+    background-size: 200% 100%;
+    animation: sh-skeleton-loading 1.5s ease-in-out infinite;
+    border-radius: 8px;
+}
+
+.dark .sh-skeleton {
+    background: linear-gradient(
+            90deg,
+            rgba(255, 255, 255, 0.06) 25%,
+            rgba(255, 255, 255, 0.1) 50%,
+            rgba(255, 255, 255, 0.06) 75%
+    );
+    background-size: 200% 100%;
+}
+
+@keyframes sh-skeleton-loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* CTA Button */
+.sh-btn-primary {
+    background: linear-gradient(135deg, var(--sh-brand) 0%, #1e9e38 100%);
+    color: white;
+    font-weight: 600;
+    border: none;
+    border-radius: 16px;
+    padding: 14px 28px;
+    font-size: 15px;
+    box-shadow: 0 4px 20px rgba(52, 199, 89, 0.35);
+    transition: all 0.3s var(--sh-transition);
+    cursor: pointer;
+}
+
+.sh-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 28px rgba(52, 199, 89, 0.45);
+}
+
+.sh-btn-primary:active {
+    transform: translateY(0);
+}
+
+.sh-btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Risk Level Badges */
+.sh-badge-low {
+    background: rgba(52, 199, 89, 0.15);
+    color: #34C759;
+}
+
+.sh-badge-moderate {
+    background: rgba(255, 202, 40, 0.15);
+    color: #F5A623;
+}
+
+.sh-badge-high {
+    background: rgba(239, 83, 80, 0.15);
+    color: #EF5350;
+}
+
+/* Responsive Grid for Dashboard */
+.sh-dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+}
+
+@media (min-width: 768px) {
+    .sh-dashboard-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 1280px) {
+    .sh-dashboard-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* Samsung Health specific scrollbar */
+.sh-scrollbar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sh-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sh-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 3px;
+}
+
+.dark .sh-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.sh-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.dark .sh-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+}

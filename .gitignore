@@ -1,0 +1,49 @@
+# dependencies
+node_modules/
+.pnp.*
+.yarn/
+
+# testing
+coverage/
+
+# next.js
+.next/
+.next/cache/
+out/
+
+# production
+build/
+dist/
+
+# env files
+.env*
+!.env.example
+
+# vercel
+.vercel/
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# assets lourds (IMPORTANT pour ton cas)
+public/assets/img/*
+public/assets/videos/*
+public/uploads/*
+public/assets/img/*.mp4
+
+# optional media
+*.mp4
+*.mov
+*.avi
+
+*.mp4
+.next/
