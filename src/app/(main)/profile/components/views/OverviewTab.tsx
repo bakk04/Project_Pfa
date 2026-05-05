@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState, useEffect } from 'react'
 import dynamic from 'next/dynamic'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { usePrediction } from '@/hooks/usePrediction'
 import { useHealthData } from '@/hooks/useHealthData'
 import { useSession } from 'next-auth/react'
@@ -11,6 +11,7 @@ import { GlassCard } from '../shared/GlassCard'
 import { ActivityRings, ActivityRingsSkeleton } from '../cards/ActivityRings'
 import { CountUp } from '../shared/AnimatedNumber'
 import { cn } from '@/lib/utils'
+import { generateMedicalReport } from '@/utils/report'
 import {
   Activity,
   Heart,
@@ -23,15 +24,16 @@ import {
   Info,
   ChevronRight,
   CheckCircle2,
-  Clock
+  Clock,
+  FileDown,
+  X
 } from 'lucide-react'
 import { useVitalStore } from '@/store/vital-store'
 
-const ResponsiveContainer = dynamic(() => import('recharts').then(mod => mod.ResponsiveContainer), { ssr: false })
-const BarChart = dynamic(() => import('recharts').then(mod => mod.BarChart), { ssr: false })
-const Bar = dynamic(() => import('recharts').then(mod => mod.Bar), { ssr: false })
-const XAxis = dynamic(() => import('recharts').then(mod => mod.XAxis), { ssr: false })
-const Tooltip = dynamic(() => import('recharts').then(mod => mod.Tooltip), { ssr: false })
+const WeeklyActivityChart = dynamic(() => import('../charts/WeeklyActivityChart'), { 
+  ssr: false,
+  loading: () => <div className="h-full w-full bg-muted/10 animate-pulse rounded-2xl" />
+})
 
 interface OverviewTabProps {
   onStartTest?: () => void
@@ -56,20 +58,54 @@ const itemVariants = {
 
 export function OverviewTab({ onStartTest }: OverviewTabProps) {
   const { data: session } = useSession()
-  const { currentPrediction } = usePrediction()
+  const { currentPrediction, askAI } = usePrediction()
   const { vitals, activity, triggerSync } = useHealthData()
   const history = useHealthStore((state) => state.history)
-  const { predictionResult, testHistory, reset: resetVitalStore } = useVitalStore()
+  const { predictionResult, testHistory, reset: resetVitalStore, onboardingData } = useVitalStore()
 
   const [mounted, setMounted] = useState(false)
   const [isSyncing, setIsSyncing] = useState(false)
+  const [aiExplanation, setAiExplanation] = useState<string | null>(null)
+  const [isAskingAI, setIsAskingAI] = useState(false)
 
   useEffect(() => { setMounted(true) }, [])
+
+  const handleAskAI = async () => {
+    if (!onboardingData?.clinical_data || !predictionResult) return
+    setIsAskingAI(true)
+    try {
+      const formattedPrediction = {
+        ...predictionResult,
+        final_probability: predictionResult.final_probability || predictionResult.probability || 0,
+        risk_status: predictionResult.risk_status
+      }
+      const explanation = await askAI(formattedPrediction, onboardingData.clinical_data)
+      setAiExplanation(explanation)
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setIsAskingAI(false)
+    }
+  }
+
+  const handleDownloadReport = () => {
+    if (!onboardingData?.clinical_data || !predictionResult) return
+    const patientInfo = {
+      name: session?.user?.name || 'Valued Patient',
+      id: session?.user?.id || 'ANON-123'
+    }
+    const formattedPrediction = {
+      ...predictionResult,
+      final_probability: predictionResult.final_probability || predictionResult.probability || 0,
+      risk_status: predictionResult.risk_status
+    }
+    generateMedicalReport(formattedPrediction, onboardingData.clinical_data, patientInfo)
+  }
 
   const hasPrediction = !!currentPrediction
   const riskLevel = hasPrediction ? currentPrediction.riskLevel : 'low'
   const healthScore = hasPrediction
-    ? Math.round(100 - (currentPrediction.probability * 100))
+    ? Math.round(100 - ((currentPrediction.final_probability || currentPrediction.probability || 0) * 100))
     : 0
 
   const progressItems = useMemo(() => [
@@ -204,7 +240,7 @@ export function OverviewTab({ onStartTest }: OverviewTabProps) {
 
                       <div className="p-4 rounded-3xl bg-sh-bg border border-sh-border flex flex-col items-center justify-center text-center">
                         <span className="text-xs font-bold text-sh-sub uppercase tracking-widest mb-2">Confidence</span>
-                        <span className="text-2xl font-black text-sh-text">{(predictionResult.probability * 100).toFixed(0)}%</span>
+                        <span className="text-2xl font-black text-sh-text">{((predictionResult.final_probability || predictionResult.probability || 0) * 100).toFixed(0)}%</span>
                       </div>
 
                       <div className="p-4 rounded-3xl bg-sh-bg border border-sh-border flex flex-col items-center justify-center text-center">
@@ -217,6 +253,30 @@ export function OverviewTab({ onStartTest }: OverviewTabProps) {
                         <Clock className="w-6 h-6 text-sh-green mb-1" />
                         <span className="text-sm font-bold text-sh-text">Just Now</span>
                       </div>
+                    </div>
+
+                    <div className="flex gap-3">
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        animate={isAskingAI ? { opacity: [0.7, 1, 0.7], transition: { repeat: Infinity, duration: 1.5 } } : {}}
+                        onClick={handleAskAI}
+                        disabled={isAskingAI}
+                        className={cn(
+                          "flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold transition-all disabled:opacity-50 text-xs shadow-lg",
+                          "bg-sh-green text-white shadow-sh-green/20"
+                        )}
+                      >
+                        <Brain className={cn("w-4 h-4", isAskingAI && "animate-pulse")} />
+                        {isAskingAI ? 'Consulting AI...' : 'Ask AI Insights'}
+                      </motion.button>
+                      <button
+                        onClick={handleDownloadReport}
+                        className="flex-1 flex items-center justify-center gap-2 py-3 px-4 bg-sh-bg border border-sh-border text-sh-text rounded-xl font-bold hover:bg-sh-border/50 transition-all text-xs"
+                      >
+                        <FileDown className="w-4 h-4" />
+                        Download Report
+                      </button>
                     </div>
 
                     {predictionResult.flags && predictionResult.flags.length > 0 && (
@@ -420,33 +480,7 @@ export function OverviewTab({ onStartTest }: OverviewTabProps) {
               </div>
             </div>
             <div className="h-32">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={activityData} barCategoryGap="20%">
-                  <XAxis
-                    dataKey="name"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'var(--card)',
-                      border: '1px solid var(--border)',
-                      borderRadius: '12px',
-                      boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-                    }}
-                    labelStyle={{ color: 'var(--foreground)', fontWeight: 600 }}
-                    itemStyle={{ color: 'var(--primary)' }}
-                  />
-                  <Bar
-                    dataKey="steps"
-                    fill="var(--primary)"
-                    radius={[6, 6, 0, 0]}
-                    animationDuration={1500}
-                    animationEasing="ease-out"
-                  />
-                </BarChart>
-              </ResponsiveContainer>
+              <WeeklyActivityChart data={activityData} />
             </div>
           </GlassCard>
         </motion.div>
@@ -501,7 +535,7 @@ export function OverviewTab({ onStartTest }: OverviewTabProps) {
                         <span className="text-[10px] text-sh-sub uppercase">BPM</span>
                       </div>
                       <div className="flex flex-col items-end">
-                        <span className="font-bold text-sh-text">{(session.metrics.probability || 0 * 100).toFixed(0)}%</span>
+                        <span className="font-bold text-sh-text">{((session.metrics.final_probability || session.metrics.probability || 0) * 100).toFixed(0)}%</span>
                         <span className="text-[10px] text-sh-sub uppercase">Conf</span>
                       </div>
                       <div className={cn("px-3 py-1 rounded-full text-[11px] font-bold capitalize", getRiskColor(session.metrics.risk_status || 'low'))}>
@@ -515,6 +549,53 @@ export function OverviewTab({ onStartTest }: OverviewTabProps) {
           </div>
         </GlassCard>
       </motion.div>
+
+      {/* AI Explanation Modal */}
+      <AnimatePresence>
+        {aiExplanation && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="bg-sh-card w-full max-w-2xl max-h-[80vh] overflow-hidden rounded-[32px] border border-sh-border shadow-2xl flex flex-col"
+            >
+              <div className="p-6 border-b border-sh-border flex justify-between items-center bg-sh-green/5">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-sh-green/20 flex items-center justify-center">
+                    <Brain className="w-6 h-6 text-sh-green" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-sh-text">AI Clinical Insights</h3>
+                    <p className="text-xs text-sh-sub">Powered by Gemini AI</p>
+                  </div>
+                </div>
+                <button onClick={() => setAiExplanation(null)} className="p-2 hover:bg-sh-bg rounded-full transition-colors">
+                  <X className="w-5 h-5 text-sh-text" />
+                </button>
+              </div>
+              
+              <div className="p-8 overflow-y-auto text-sh-text leading-relaxed whitespace-pre-wrap text-sm">
+                {aiExplanation}
+              </div>
+
+              <div className="p-6 bg-sh-bg border-t border-sh-border flex justify-end">
+                <button 
+                  onClick={() => setAiExplanation(null)}
+                  className="px-8 py-2.5 bg-sh-green text-white rounded-2xl font-bold hover:opacity-90 transition-all shadow-lg shadow-sh-green/20"
+                >
+                  Close
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   )
 }

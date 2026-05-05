@@ -1,34 +1,48 @@
 import { z } from 'zod';
 
-// Clinical form schema - strict validation
+// Clinical form schema - strict validation based on backend requirements
 export const ClinicalFormSchema = z.object({
-  age: z
+  weight: z
     .number()
-    .int()
-    .min(1, 'Age must be at least 1')
-    .max(150, 'Age must be 150 or less'),
-  bloodPressure: z.object({
-    systolic: z
-      .number()
-      .min(50, 'Systolic BP too low')
-      .max(300, 'Systolic BP too high'),
-    diastolic: z
-      .number()
-      .min(30, 'Diastolic BP too low')
-      .max(200, 'Diastolic BP too high'),
-  }),
-  glucose: z
+    .positive('Weight must be positive')
+    .max(500, 'Weight too high'),
+  height: z
+    .number()
+    .positive('Height must be positive')
+    .max(300, 'Height too high'),
+  glucose_fasting_mg_dl: z
     .number()
     .positive('Glucose must be positive')
     .max(600, 'Glucose value too high'),
-  bmi: z
+  hba1c: z
     .number()
-    .positive('BMI must be positive')
-    .max(100, 'BMI too high'),
-  familyHistory: z.boolean(),
+    .min(3, 'HbA1c too low')
+    .max(20, 'HbA1c too high'),
   smoking: z.boolean(),
-  physicalActivity: z.boolean(),
-  dietQuality: z.enum(['poor', 'fair', 'good', 'excellent']),
+  familyHistory: z.boolean(),
+  gender: z.number().min(0).max(1),
+  bloodpressure: z
+    .number()
+    .min(30, 'Blood pressure too low')
+    .max(300, 'Blood pressure too high'),
+  pregnancies: z
+    .number()
+    .int()
+    .min(0)
+    .max(20),
+  skinthickness: z
+    .number()
+    .min(0)
+    .max(100),
+  insulin: z
+    .number()
+    .min(0)
+    .max(1000),
+  diabetespedigreefunction: z
+    .number()
+    .min(0)
+    .max(5),
+  dateOfBirth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
 });
 
 // Vitals schema for manual input
@@ -92,12 +106,12 @@ export function validateVitals(data: unknown) {
 // Clinical rules - applied on backend
 export function applyClinicalRules(data: {
   glucose?: number;
-  systolic?: number;
+  bloodpressure?: number;
   bmi?: number;
 }) {
   const flags = {
     highGlucose: (data.glucose ?? 0) > 126,
-    hypertension: (data.systolic ?? 0) > 140,
+    hypertension: (data.bloodpressure ?? 0) > 140,
     highBMI: (data.bmi ?? 0) > 30,
   };
   return flags;

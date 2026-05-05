@@ -12,14 +12,19 @@ interface ClinicalFormProps {
 
 export function ClinicalForm({ onSubmit, isLoading = false }: ClinicalFormProps) {
   const [formData, setFormData] = useState<ClinicalData>({
-    age: 30,
-    glucose: 100,
-    bloodPressure: { systolic: 120, diastolic: 80 },
-    bmi: 24,
-    familyHistory: false,
+    weight: 75,
+    height: 175,
+    glucose_fasting_mg_dl: 100,
+    hba1c: 5.4,
     smoking: false,
-    physicalActivity: true,
-    dietQuality: 'fair',
+    familyHistory: false,
+    gender: 0, // Female
+    bloodpressure: 120,
+    pregnancies: 0,
+    skinthickness: 20,
+    insulin: 80,
+    diabetespedigreefunction: 0.47,
+    dateOfBirth: '1990-01-01',
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -42,22 +47,10 @@ export function ClinicalForm({ onSubmit, isLoading = false }: ClinicalFormProps)
 
   const handleChange = useCallback(
     (field: string, value: unknown) => {
-      setFormData((prev: ClinicalData) => {
-        if (field.includes('.')) {
-          const [parent, child] = field.split('.')
-          return {
-            ...prev,
-            [parent]: {
-              ...(prev[parent as keyof ClinicalData] as any),
-              [child]: value,
-            },
-          }
-        }
-        return {
-          ...prev,
-          [field]: value,
-        }
-      })
+      setFormData((prev: ClinicalData) => ({
+        ...prev,
+        [field]: value,
+      }))
 
       if (errors[field]) {
         setErrors((prev) => {
@@ -88,74 +81,138 @@ export function ClinicalForm({ onSubmit, isLoading = false }: ClinicalFormProps)
 
   return (
     <form onSubmit={handleSubmit} className={styles.form}>
-      <div className={styles.inputGroup}>
-        <label className={styles.label}>Age (years)</label>
-        <input
-          type="number"
-          min="18"
-          max="120"
-          value={formData.age}
-          onChange={(e) => handleChange('age', parseInt(e.target.value))}
-          className={styles.input}
-          disabled={isLoading}
-        />
-        {errors['age'] && <p className={styles.errorText}>{errors['age']}</p>}
-      </div>
-
-      <div className={styles.inputGroup}>
-        <label className={styles.label}>Fasting Glucose (mg/dL)</label>
-        <input
-          type="number"
-          min="0"
-          max="500"
-          value={formData.glucose}
-          onChange={(e) => handleChange('glucose', parseInt(e.target.value))}
-          className={styles.input}
-          disabled={isLoading}
-        />
-        {errors['glucose'] && <p className={styles.errorText}>{errors['glucose']}</p>}
-      </div>
-
-      <div className={styles.grid}>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className={styles.inputGroup}>
-          <label className={styles.label}>SBP (mmHg)</label>
+          <label className={styles.label}>Weight (kg)</label>
           <input
             type="number"
-            min="0"
-            max="300"
-            value={formData.bloodPressure.systolic}
-            onChange={(e) => handleChange('bloodPressure.systolic', parseInt(e.target.value))}
+            value={formData.weight}
+            onChange={(e) => handleChange('weight', parseFloat(e.target.value))}
+            className={styles.input}
+            disabled={isLoading}
+          />
+          {errors['weight'] && <p className={styles.errorText}>{errors['weight']}</p>}
+        </div>
+
+        <div className={styles.inputGroup}>
+          <label className={styles.label}>Height (cm)</label>
+          <input
+            type="number"
+            value={formData.height}
+            onChange={(e) => handleChange('height', parseFloat(e.target.value))}
+            className={styles.input}
+            disabled={isLoading}
+          />
+          {errors['height'] && <p className={styles.errorText}>{errors['height']}</p>}
+        </div>
+
+        <div className={styles.inputGroup}>
+          <label className={styles.label}>Fasting Glucose (mg/dL)</label>
+          <input
+            type="number"
+            value={formData.glucose_fasting_mg_dl}
+            onChange={(e) => handleChange('glucose_fasting_mg_dl', parseFloat(e.target.value))}
+            className={styles.input}
+            disabled={isLoading}
+          />
+          {errors['glucose_fasting_mg_dl'] && <p className={styles.errorText}>{errors['glucose_fasting_mg_dl']}</p>}
+        </div>
+
+        <div className={styles.inputGroup}>
+          <label className={styles.label}>HbA1c (%)</label>
+          <input
+            type="number"
+            step="0.1"
+            value={formData.hba1c}
+            onChange={(e) => handleChange('hba1c', parseFloat(e.target.value))}
+            className={styles.input}
+            disabled={isLoading}
+          />
+          {errors['hba1c'] && <p className={styles.errorText}>{errors['hba1c']}</p>}
+        </div>
+
+        <div className={styles.inputGroup}>
+          <label className={styles.label}>Blood Pressure (Systolic)</label>
+          <input
+            type="number"
+            value={formData.bloodpressure}
+            onChange={(e) => handleChange('bloodpressure', parseFloat(e.target.value))}
+            className={styles.input}
+            disabled={isLoading}
+          />
+          {errors['bloodpressure'] && <p className={styles.errorText}>{errors['bloodpressure']}</p>}
+        </div>
+
+        <div className={styles.inputGroup}>
+          <label className={styles.label}>Gender</label>
+          <select
+            value={formData.gender}
+            onChange={(e) => handleChange('gender', parseInt(e.target.value))}
+            className={styles.input}
+            disabled={isLoading}
+          >
+            <option value={1}>Male</option>
+            <option value={0}>Female</option>
+          </select>
+        </div>
+
+        <div className={styles.inputGroup}>
+          <label className={styles.label}>Insulin (μU/mL)</label>
+          <input
+            type="number"
+            value={formData.insulin}
+            onChange={(e) => handleChange('insulin', parseFloat(e.target.value))}
             className={styles.input}
             disabled={isLoading}
           />
         </div>
+
         <div className={styles.inputGroup}>
-          <label className={styles.label}>DBP (mmHg)</label>
+          <label className={styles.label}>Skin Thickness (mm)</label>
           <input
             type="number"
-            min="0"
-            max="200"
-            value={formData.bloodPressure.diastolic}
-            onChange={(e) => handleChange('bloodPressure.diastolic', parseInt(e.target.value))}
+            value={formData.skinthickness}
+            onChange={(e) => handleChange('skinthickness', parseFloat(e.target.value))}
             className={styles.input}
             disabled={isLoading}
           />
         </div>
-      </div>
 
-      <div className={styles.inputGroup}>
-        <label className={styles.label}>BMI (kg/m²)</label>
-        <input
-          type="number"
-          min="0"
-          max="100"
-          step="0.1"
-          value={formData.bmi}
-          onChange={(e) => handleChange('bmi', parseFloat(e.target.value))}
-          className={styles.input}
-          disabled={isLoading}
-        />
-        {errors['bmi'] && <p className={styles.errorText}>{errors['bmi']}</p>}
+        <div className={styles.inputGroup}>
+          <label className={styles.label}>Date of Birth</label>
+          <input
+            type="date"
+            value={formData.dateOfBirth}
+            onChange={(e) => handleChange('dateOfBirth', e.target.value)}
+            className={styles.input}
+            disabled={isLoading}
+          />
+        </div>
+
+        <div className={styles.inputGroup}>
+          <label className={styles.label}>Diabetes Pedigree Function</label>
+          <input
+            type="number"
+            step="0.01"
+            value={formData.diabetespedigreefunction}
+            onChange={(e) => handleChange('diabetespedigreefunction', parseFloat(e.target.value))}
+            className={styles.input}
+            disabled={isLoading}
+          />
+        </div>
+
+        {formData.gender === 0 && (
+          <div className={styles.inputGroup}>
+            <label className={styles.label}>Pregnancies</label>
+            <input
+              type="number"
+              value={formData.pregnancies}
+              onChange={(e) => handleChange('pregnancies', parseInt(e.target.value))}
+              className={styles.input}
+              disabled={isLoading}
+            />
+          </div>
+        )}
       </div>
 
       <div className={styles.checkboxGroup}>

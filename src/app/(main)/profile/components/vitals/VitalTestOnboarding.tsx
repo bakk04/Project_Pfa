@@ -60,6 +60,7 @@ export function VitalTestOnboarding({ userData, onComplete, onCancel }: Onboardi
   const [formData, setFormData] = useState({
     weight: 0,
     height: 0,
+    gender: 0, // 1 for Male, 0 for Female
     smoking: false,
     diabetic: false,
     familyHistory: false,
@@ -75,6 +76,7 @@ export function VitalTestOnboarding({ userData, onComplete, onCancel }: Onboardi
         ...prev,
         weight: userData.healthData.weight || 0,
         height: userData.healthData.height || 0,
+        gender: userData.healthData.gender !== undefined ? userData.healthData.gender : 0,
         smoking: userData.healthData.smoking || false,
         diabetic: userData.healthData.diabetic || false,
         familyHistory: userData.healthData.familyHistory || false,
@@ -187,6 +189,38 @@ export function VitalTestOnboarding({ userData, onComplete, onCancel }: Onboardi
                   onChange={(e) => setFormData({...formData, height: parseFloat(e.target.value) || 0})}
                   className="w-full bg-sh-bg border-none rounded-2xl px-4 py-3 text-sh-text text-[15px] font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-sh-green/50 transition-all"
                 />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[11px] font-bold text-sh-sub uppercase tracking-wider pl-1">Gender</label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setFormData({...formData, gender: 1})}
+                  className={cn(
+                    "flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-bold transition-all border-none outline-none",
+                    formData.gender === 1 
+                      ? "bg-sh-green text-white shadow-md shadow-sh-green/20" 
+                      : "bg-sh-bg text-sh-text hover:bg-sh-bg/80"
+                  )}
+                >
+                  <User className="w-4 h-4" />
+                  Male
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFormData({...formData, gender: 0})}
+                  className={cn(
+                    "flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-bold transition-all border-none outline-none",
+                    formData.gender === 0 
+                      ? "bg-sh-green text-white shadow-md shadow-sh-green/20" 
+                      : "bg-sh-bg text-sh-text hover:bg-sh-bg/80"
+                  )}
+                >
+                  <User className="w-4 h-4" />
+                  Female
+                </button>
               </div>
             </div>
 

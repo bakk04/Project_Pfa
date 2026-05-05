@@ -6,30 +6,7 @@ import {
   checkRateLimit,
   sanitizeString,
 } from '@/app/(main)/api/_lib/api-utils'
-import type { ChatMessage } from '@/store/ai-store'
-
-// Mock chat response generator (replace with actual Gemini API call)
-function generateMockChatResponse(userMessage: string): string {
-  const responses: Record<string, string> = {
-    hello: "Hi! I'm here to help with your health questions. What would you like to know?",
-    vitals:
-      'Your recent vitals look good. Keep monitoring them regularly for the best health outcomes.',
-    glucose: 'Blood glucose levels are important for diabetes prevention. Aim to maintain fasting glucose below 100 mg/dL.',
-    exercise:
-      'Regular exercise (150 min/week) is recommended. It helps improve heart health and blood sugar control.',
-    diet: 'A balanced diet with whole grains, lean proteins, and vegetables is essential for good health.',
-  }
-
-  const lowerMessage = userMessage.toLowerCase()
-
-  for (const [keyword, response] of Object.entries(responses)) {
-    if (lowerMessage.includes(keyword)) {
-      return response
-    }
-  }
-
-  return "Thanks for your question! Based on your health data, I recommend consulting with your healthcare provider for personalized advice."
-}
+import { GoogleGenerativeAI } from '@google/generative-ai'
 
 export async function POST(request: NextRequest) {
   try {
@@ -73,19 +50,42 @@ export async function POST(request: NextRequest) {
     // Get conversation history (optional context for AI)
     const conversationHistory = Array.isArray(body.conversationHistory) ? body.conversationHistory : []
 
-    // Generate response (replace with actual Gemini API call)
-    const aiResponse = generateMockChatResponse(userMessage)
+    // Gemini API Call
+    const apiKey = process.env.GEMINI_API_KEY
+    if (!apiKey) {
+      const { response } = createErrorResponse(500, 'Configuration Error', 'Gemini API key not configured')
+      return response
+    }
 
-    console.log('[v0] Chat message processed for user:', userId)
+    const genAI = new GoogleGenerativeAI(apiKey)
+    const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest' })
+
+    // Build chat history for Gemini
+    const history = conversationHistory.map((msg: any) => ({
+      role: msg.role === 'user' ? 'user' : 'model',
+      parts: [{ text: msg.content }],
+    }))
+
+    const chat = model.startChat({
+      history: history,
+      generationConfig: {
+        maxOutputTokens: 500,
+      },
+    })
+
+    const result = await chat.sendMessage(userMessage)
+    const aiResponse = result.response.text()
+
+    console.log('[Gemini Chat] message processed for user:', userId)
 
     const { response } = createResponse(200, {
       message: aiResponse,
-      tokens: 150, // Mock token count
+      tokens: 0, // Token count not directly available from simple response
     })
 
     return response
-  } catch (error) {
-    console.error('[v0] Chat error:', error)
+  } catch (error: any) {
+    console.error('[Gemini Chat] Error:', error)
 
     if (error instanceof SyntaxError) {
       const { response } = createErrorResponse(400, 'Invalid JSON', 'Request body must be valid JSON')

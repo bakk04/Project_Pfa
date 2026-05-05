@@ -9,15 +9,10 @@ import { HealthSummaryCards } from '../cards/health-summary-cards'
 import { cn } from '@/lib/utils'
 import { Heart, TrendingUp, Activity } from 'lucide-react'
 
-const ResponsiveContainer = dynamic(() => import('recharts').then(mod => mod.ResponsiveContainer), { ssr: false })
-const LineChart = dynamic(() => import('recharts').then(mod => mod.LineChart), { ssr: false })
-const Line = dynamic(() => import('recharts').then(mod => mod.Line), { ssr: false })
-const XAxis = dynamic(() => import('recharts').then(mod => mod.XAxis), { ssr: false })
-const YAxis = dynamic(() => import('recharts').then(mod => mod.YAxis), { ssr: false })
-const Tooltip = dynamic(() => import('recharts').then(mod => mod.Tooltip), { ssr: false })
-const CartesianGrid = dynamic(() => import('recharts').then(mod => mod.CartesianGrid), { ssr: false })
-const Area = dynamic(() => import('recharts').then(mod => mod.Area), { ssr: false })
-const AreaChart = dynamic(() => import('recharts').then(mod => mod.AreaChart), { ssr: false })
+const HeartRateHistoryChart = dynamic(() => import('../charts/HeartRateHistoryChart'), { 
+  ssr: false,
+  loading: () => <div className="h-full w-full bg-muted/10 animate-pulse rounded-2xl" />
+})
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -125,53 +120,7 @@ export function HealthDataTab() {
           
           {chartData.length > 0 ? (
             <div className="h-72">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="heartRateGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#EF5350" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#EF5350" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.3} />
-                  <XAxis 
-                    dataKey="time" 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }}
-                  />
-                  <YAxis 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }}
-                    domain={['dataMin - 10', 'dataMax + 10']}
-                    width={40}
-                  />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'var(--card)',
-                      border: '1px solid var(--border)',
-                      borderRadius: '16px',
-                      boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
-                      padding: '12px 16px',
-                    }}
-                    labelStyle={{ color: 'var(--foreground)', fontWeight: 600, marginBottom: '4px' }}
-                    itemStyle={{ color: '#EF5350' }}
-                    formatter={(value: number) => [`${value} bpm`, 'Heart Rate']}
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="value" 
-                    stroke="#EF5350" 
-                    strokeWidth={3}
-                    fill="url(#heartRateGradient)"
-                    dot={{ r: 4, fill: '#EF5350', strokeWidth: 2, stroke: 'var(--card)' }}
-                    activeDot={{ r: 6, fill: '#EF5350', stroke: 'var(--card)', strokeWidth: 3 }}
-                    animationDuration={1500}
-                    animationEasing="ease-out"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+              <HeartRateHistoryChart data={chartData} />
             </div>
           ) : (
             <div className="h-72 flex flex-col items-center justify-center">

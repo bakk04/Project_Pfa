@@ -21,6 +21,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
+    console.log('[API Monitor] Sending to FastAPI:', JSON.stringify(body, null, 2));
     
     // In a real production environment, this would be an environment variable
     // like process.env.FASTAPI_URL or similar.
@@ -36,6 +37,10 @@ export async function POST(request: Request) {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
+      console.error('[API Monitor] FastAPI error response:', {
+        status: response.status,
+        data: errorData
+      });
       return NextResponse.json(
         { error: 'FastAPI error', details: errorData },
         { status: response.status }

@@ -75,7 +75,7 @@ export default function ProfilePage() {
   }, [triggerSync])
 
   const toggleSidebar = () => {
-    if (window.innerWidth >= 768) {
+    if (typeof window !== 'undefined' && window.innerWidth >= 1024) {
       setIsSidebarCollapsed(!isSidebarCollapsed)
     } else {
       setIsSidebarOpenMobile(!isSidebarOpenMobile)
@@ -127,6 +127,8 @@ export default function ProfilePage() {
         activeTab={activeTab} 
         onTabChange={setActiveTab} 
         isCollapsed={isSidebarCollapsed}
+        isOpen={isSidebarOpenMobile || (typeof window !== 'undefined' && window.innerWidth >= 1024)}
+        onClose={() => setIsSidebarOpenMobile(false)}
       />
 
       {/* Onboarding Overlay */}

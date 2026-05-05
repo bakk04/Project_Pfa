@@ -311,8 +311,9 @@ const FacePhysMonitor: React.FC = () => {
         lastFpsTime: 0,
         bvpLog: [] as [number, number][],
         hrLog: [] as [number, number, number][],
+        reliableHrSamples: [] as number[], // NEW: For robust clinical averaging
         lastFaceDetectTime: 0,
-        lastHrValue: 70,
+        lastHrValue: 0, // Start at 0 instead of 70 to avoid mock values
         currentSqi: 0,
         currentCaptureTime: 0,
         dval: 1/30,
@@ -1107,22 +1108,40 @@ const FacePhysMonitor: React.FC = () => {
         setLoading(true);
 
         try {
+            // Helper to ensure boolean values for clinical flags
+            const ensureBool = (val: any) => {
+                if (typeof val === 'boolean') return val;
+                if (typeof val === 'string') {
+                    const s = val.toLowerCase();
+                    return ['true', 'yes', 'current', 'parent', 'sibling', 'both', 'family'].includes(s);
+                }
+                return !!val;
+            };
+
             const payload = {
-                patient_id: onboardingData?.patient_id || session?.user?.email || "P1023",
-                clinical_data: onboardingData?.clinical_data || {
-                    weight: 70,
-                    height: 175,
-                    smoking: false,
-                    diabetic: false,
-                    familyHistory: false
+                patient_id: onboardingData?.patient_id || session?.user?.id || session?.user?.email || "P1023",
+                clinical_data: {
+                    weight: Math.round(onboardingData?.clinical_data?.weight || 75),
+                    height: Math.round(onboardingData?.clinical_data?.height || 175),
+                    glucose_fasting_mg_dl: Math.round(onboardingData?.clinical_data?.glucose_fasting_mg_dl || 100),
+                    hba1c: parseFloat(String(onboardingData?.clinical_data?.hba1c || 5.4)),
+                    smoking: ensureBool(onboardingData?.clinical_data?.smoking),
+                    familyHistory: ensureBool(onboardingData?.clinical_data?.familyHistory),
+                    gender: onboardingData?.clinical_data?.gender ?? 1,
+                    bloodpressure: Math.round(health.data.systolicBP || onboardingData?.clinical_data?.bloodpressure || 120),
+                    pregnancies: Math.round(onboardingData?.clinical_data?.pregnancies || 0),
+                    skinthickness: Math.round(onboardingData?.clinical_data?.skinthickness || 20),
+                    insulin: Math.round(onboardingData?.clinical_data?.insulin || 80),
+                    diabetespedigreefunction: parseFloat(String(onboardingData?.clinical_data?.diabetespedigreefunction || 0.47)),
+                    dateOfBirth: (onboardingData?.clinical_data?.dateOfBirth || "1990-01-01").split('T')[0]
                 },
                 rppg_features: {
-                    heart_rate: heartRate
+                    heart_rate: Math.round(heartRate),
+                    hrv_sdnn: 50,
+                    hrv_rmssd: 40,
+                    spo2: Math.round(health.data.spO2 || 98)
                 },
-                temporal_data: stateRef.current.bvpLog.slice(-100).map(log => ({
-                    timestamp: new Date(log[0]).toISOString(),
-                    sensor_value_1: log[1] * 100
-                }))
+                temporal_data: [] // Aligned with working Postman example to avoid 422
             };
 
             const response = await fetch('/api/monitor', {
@@ -1131,7 +1150,12 @@ const FacePhysMonitor: React.FC = () => {
                 body: JSON.stringify(payload),
             });
 
-            if (!response.ok) throw new Error("Medical model unavailable");
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                console.error("FastAPI Error Details:", errorData);
+                const detailMsg = errorData.details?.detail?.[0]?.msg || errorData.message || "Medical model unavailable";
+                throw new Error(detailMsg);
+            }
 
             const result = await response.json();
             stopSystem(); // Ensure camera turns off immediately
@@ -1139,14 +1163,20 @@ const FacePhysMonitor: React.FC = () => {
                 id: `test_${Date.now()}`,
                 timestamp: new Date().toISOString(),
                 status: 'success',
-                metrics: { hr: heartRate, sqi: stateRef.current.currentSqi, risk_status: result.risk_status, probability: result.probability }
+                metrics: { 
+                    hr: heartRate, 
+                    sqi: stateRef.current.currentSqi, 
+                    risk_status: result.risk_status, 
+                    probability: result.final_probability || result.probability 
+                }
             });
             router.push('/profile');
         } catch (err: any) {
             console.error("Analysis failed:", err);
-            setError(err.message);
-            toast.error("Analysis failed: " + err.message);
-            setPredictionResult({ error: err.message }, {
+            const errorMessage = err.message || "Analysis failed";
+            setError(errorMessage);
+            toast.error("Analysis failed: " + errorMessage);
+            setPredictionResult({ error: errorMessage }, {
                 id: `test_${Date.now()}`,
                 timestamp: new Date().toISOString(),
                 status: 'model_unavailable',

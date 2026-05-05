@@ -1,12 +1,13 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import { ClinicalForm } from '../ai-prediction/clinical-form'
 import { PredictionCard } from '../ai-prediction/prediction-card'
 import { usePrediction } from '@/hooks/usePrediction'
 import { GlassCard } from '../shared/GlassCard'
 import { BrainCircuit, FileText } from 'lucide-react'
+import type { ClinicalData } from '@/types/prediction'
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -27,8 +28,10 @@ const itemVariants = {
 
 export function PredictionTab() {
   const { currentPrediction, predictionLoading, predict } = usePrediction()
+  const [lastClinicalData, setLastClinicalData] = useState<ClinicalData | null>(null)
 
-  const handlePredictionSubmit = async (clinicalData: any) => {
+  const handlePredictionSubmit = async (clinicalData: ClinicalData) => {
+    setLastClinicalData(clinicalData)
     await predict(clinicalData)
   }
 
@@ -46,7 +49,7 @@ export function PredictionTab() {
         </div>
         <div>
           <h2 className="text-xl font-bold text-foreground">AI Health Prediction</h2>
-          <p className="text-sm text-muted-foreground">Advanced cardiovascular risk assessment</p>
+          <p className="text-sm text-muted-foreground">SaMD-grade cardiovascular & diabetes risk assessment</p>
         </div>
       </motion.div>
 
@@ -60,7 +63,11 @@ export function PredictionTab() {
                 Risk Assessment
               </h3>
             </div>
-            <PredictionCard prediction={currentPrediction} isLoading={predictionLoading} />
+            <PredictionCard 
+              prediction={currentPrediction} 
+              clinicalData={lastClinicalData}
+              isLoading={predictionLoading} 
+            />
           </GlassCard>
         </motion.div>
 
@@ -74,7 +81,7 @@ export function PredictionTab() {
               </h3>
             </div>
             <p className="text-sm text-muted-foreground mb-6">
-              Provide accurate data for precise AI analysis
+              Provide accurate clinical data for precise AI analysis
             </p>
             <ClinicalForm onSubmit={handlePredictionSubmit} isLoading={predictionLoading} />
           </GlassCard>

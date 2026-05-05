@@ -1,46 +1,46 @@
 export interface ClinicalData {
-  age: number;
-  bloodPressure: { systolic: number; diastolic: number };
-  glucose: number; // mg/dL
-  bmi: number;
-  familyHistory: boolean;
+  weight: number;
+  height: number;
+  glucose_fasting_mg_dl: number;
+  hba1c: number;
   smoking: boolean;
-  physicalActivity: boolean;
-  dietQuality: 'poor' | 'fair' | 'good' | 'excellent';
+  familyHistory: boolean;
+  gender: number; // 0 for female, 1 for male
+  bloodpressure: number;
+  pregnancies: number;
+  skinthickness: number;
+  insulin: number;
+  diabetespedigreefunction: number;
+  dateOfBirth: string; // YYYY-MM-DD
 }
 
-export interface ClinicalFlags {
-  highGlucose: boolean; // > 126 mg/dL
-  hypertension: boolean; // systolic > 140
-  highBMI: boolean; // > 30
-  sedentary: boolean;
-  poorDiet: boolean;
+export interface RppgFeatures {
+  heart_rate: number;
+  hrv_sdnn: number;
+  hrv_rmssd: number;
+  spo2: number;
+}
+
+export interface PredictionRequest {
+  patient_id: string;
+  clinical_data: ClinicalData;
+  rppg_features: RppgFeatures;
+  temporal_data: any[];
 }
 
 export interface DiabetesPrediction {
-  probability: number; // 0-1 (0-100%)
-  hasDiabetesRisk: boolean;
-  uncertainty: number; // confidence interval width
-  clinicalFlags: ClinicalFlags;
-  riskLevel: 'low' | 'moderate' | 'high';
-  recommendedActions: string[];
-  timestamp: Date;
+  risk_status: 'LOW' | 'MODERATE' | 'HIGH';
+  final_probability: number; // The 1.0 or 0.857 in the example
+  probability_ensemble?: number;
+  probability_calibrated?: number;
+  uncertainty: number;
+  flags: string[];
+  timestamp: string;
 }
 
 export interface PredictionHistory {
   predictions: DiabetesPrediction[];
   maxEntries: number;
-}
-
-export interface AIStore {
-  currentPrediction: DiabetesPrediction | null;
-  predictionHistory: DiabetesPrediction[];
-  messages: ChatMessage[];
-  addPrediction: (prediction: DiabetesPrediction) => void;
-  getPrediction: () => DiabetesPrediction | null;
-  getPredictionHistory: () => DiabetesPrediction[];
-  addMessage: (message: ChatMessage) => void;
-  clearMessages: () => void;
 }
 
 export interface ChatMessage {

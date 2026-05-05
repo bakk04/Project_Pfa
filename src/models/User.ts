@@ -31,6 +31,7 @@ const UserSchema = new Schema({
   healthData: {
     weight: Number,
     height: Number,
+    gender: Number, // 0 for female, 1 for male
     smoking: String,
     diabetic: String,
     familyHistory: String,
