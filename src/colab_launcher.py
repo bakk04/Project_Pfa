@@ -17,9 +17,9 @@ from google.colab import drive
 drive.mount('/content/drive')
 
 # 2. Définition du répertoire de travail (Adapter si nécessaire)
-PROJECT_PATH = '/content/drive/MyDrive/DiabetesMultimodal'
+PROJECT_PATH = '/content/drive/MyDrive/diabetes_model'
 os.makedirs(PROJECT_PATH, exist_ok=True)
-sys.path.insert(0, os.path.join(PROJECT_PATH, 'src'))
+sys.path.insert(0, PROJECT_PATH)
 
 # 3. Installation des dépendances critiques
 !pip install pytorch-tabnet optuna lightgbm xgboost --quiet
@@ -30,7 +30,7 @@ sys.path.insert(0, os.path.join(PROJECT_PATH, 'src'))
 # ╚══════════════════════════════════════════════════════════╝
 """
 import torch
-from train_base import main as train_main
+from src.training.train_base import main as train_main
 
 # Vérification du device (GPU fortement recommandé pour SaMD)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -44,7 +44,7 @@ train_output = train_main()
 # ║  CELLULE 3 — Stacking, Calibration & Validation Finale  ║
 # ╚══════════════════════════════════════════════════════════╝
 """
-from stacking import run_stacking_pipeline
+from src.stacking.stacking import run_stacking_pipeline
 
 # Exécution de la couche d'ensemble, calibration isotonique et hard rules
 stack_output = run_stacking_pipeline(train_output)

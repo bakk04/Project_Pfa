@@ -1,0 +1,17 @@
+{
+  "test_auc_ensemble": 0.7547425474254743,
+  "test_auc_gmu": 0.6233062330623307,
+  "test_auprc_ensemble": 0.6602313408664215,
+  "hard_rule_stats": {
+    "glucose_high_risk": 10,
+    "glucose_prediabetes": 24,
+    "hba1c_high_risk": 0,
+    "hba1c_prediabetes": 0,
+    "total_corrections": 34
+  },
+  "risk_distribution": {
+    "HIGH": 11,
+    "MODERATE": 24,
+    "LOW": 65
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "best_params": {
+    "lr": 0.008706020878304856,
+    "dropout": 0.41622132040021087,
+    "n_layers": 1,
+    "layer_dim": 128,
+    "batch_size": 32,
+    "epochs": 57,
+    "weight_decay": 2.621087878265438e-05
+  },
+  "best_auc": 0.5881751365546372
+}

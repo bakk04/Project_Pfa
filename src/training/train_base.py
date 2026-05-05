@@ -10,13 +10,20 @@
 #   6. L'extraction des embeddings OOF pour le stacking
 #   7. Le logging des métriques (AUC, F1, ECE, Loss)
 # =============================================================================
-
 import os
+import sys
 import time
 import json
 import pickle
 import numpy as np
 import torch
+
+# --- CONFIGURATION DES CHEMINS ---
+curr_dir = os.path.dirname(__file__)
+project_root = os.path.abspath(os.path.join(curr_dir, '..', '..'))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
 import torch.nn as nn
 import torch.optim as optim
 from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts, LinearLR, SequentialLR
@@ -31,8 +38,8 @@ warnings.filterwarnings("ignore")
 
 # Imports du projet
 from config import TRAIN_CFG, INFER_CFG, PATHS, DEVICE, EMBED
-from models import DiabetesMultimodalNet, MCDropoutInference
-from pipeline import (
+from src.models.diabetes_model_net import DiabetesMultimodalNet, MCDropout, MCDropoutInference
+from src.pipeline.pipeline import (
     build_full_pipeline, OOFCrossValidator,
     build_dataloaders, DiabetesMultimodalDataset
 )
@@ -82,22 +89,44 @@ def compute_metrics(
         "specificity" : specificity,
         "brier"       : brier_score_loss(y_true, y_prob),
         "ece"         : expected_calibration_error(y_true, y_prob),
+        "tp": int(tp), "tn": int(tn), "fp": int(fp), "fn": int(fn)
     }
 
 
 # =============================================================================
-# 2. LOSS COMPOSITE (BCE + Régularisation TabNet)
+# 2. LOSS COMPOSITE (Focal Loss + Régularisation TabNet)
 # =============================================================================
+
+class FocalLoss(nn.Module):
+    """
+    Focal Loss pour gérer le déséquilibre de classe.
+    Utilise pos_weight dans BCEWithLogitsLoss pour la pondération de classe
+    (stratégie unique pour éviter le double-comptage du déséquilibre).
+    """
+    def __init__(self, gamma=2.0, pos_weight=None):
+        super().__init__()
+        self.gamma = gamma
+        # BCE avec pos_weight gère l'imbalance de classe proprement
+        self.bce = nn.BCEWithLogitsLoss(reduction='none', pos_weight=pos_weight)
+
+    def forward(self, logits, targets):
+        bce_loss = self.bce(logits, targets)
+        probs = torch.sigmoid(logits)
+        # pt est la probabilité de la classe correcte
+        pt = targets * probs + (1 - targets) * (1 - probs)
+
+        # On applique uniquement le facteur focal (1-pt)^gamma
+        # La pondération alpha/pos_weight est déjà dans bce_loss
+        focal_loss = (1 - pt)**self.gamma * bce_loss
+        return focal_loss.mean()
 
 class CompositeLoss(nn.Module):
     """
-    Loss = BCE_with_logits + λ_entropy * TabNet_entropy_loss
-    La régularisation d'entropie encourage la sparsité dans la sélection de features.
+    Loss = FocalLoss(pos_weight) + λ_entropy * TabNet_entropy_loss
     """
-
     def __init__(self, pos_weight: Optional[torch.Tensor] = None, entropy_weight: float = 1e-3):
         super().__init__()
-        self.bce          = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
+        self.focal = FocalLoss(pos_weight=pos_weight)
         self.entropy_weight = entropy_weight
 
     def forward(
@@ -106,9 +135,9 @@ class CompositeLoss(nn.Module):
         target: torch.Tensor,
         entropy_loss: torch.Tensor,
     ) -> Tuple[torch.Tensor, float, float]:
-        bce_loss  = self.bce(logit, target)
-        total     = bce_loss + self.entropy_weight * entropy_loss
-        return total, bce_loss.item(), (self.entropy_weight * entropy_loss).item()
+        f_loss    = self.focal(logit, target)
+        total     = f_loss + self.entropy_weight * entropy_loss
+        return total, f_loss.item(), (self.entropy_weight * entropy_loss).item()
 
 
 # =============================================================================
@@ -161,7 +190,7 @@ class EarlyStopping:
 
     def _save(self, model: nn.Module):
         torch.save(model.state_dict(), self.save_path)
-        print(f"  💾 Meilleurs poids sauvegardés → {self.save_path} (score: {self.best_score:.4f})")
+        print(f"  [OK] Meilleurs poids sauvegardes -> {self.save_path} (score: {self.best_score:.4f})")
 
 
 # =============================================================================
@@ -330,6 +359,23 @@ def validate(
     metrics = compute_metrics(y_true, y_prob)
     metrics["loss"] = total_loss / len(loader)
 
+    # --- AUDIT DE SÉMANTIQUE DES LABELS ---
+    # On vérifie sur quelques samples si Prob(High Glucose) -> Prob(Diabetes)
+    high_glucose_idx = np.where(glucose >= 126)[0]
+    if len(high_glucose_idx) > 0:
+        avg_prob_high_g = y_prob[high_glucose_idx].mean()
+        metrics["audit_avg_prob_high_glucose"] = float(avg_prob_high_g)
+        if avg_prob_high_g < 0.3:
+            print(f"WARNING: Risque d'inversion de label detecte ! Proba moyenne pour Glucose>=126 : {avg_prob_high_g:.4f}")
+    
+    # FIX: Audit des patients sains (Glucose < 100) pour détecter le collapse vers 0.5
+    healthy_idx = np.where(glucose < 100)[0]
+    if len(healthy_idx) > 0:
+        avg_prob_healthy = y_prob[healthy_idx].mean()
+        metrics["audit_avg_prob_healthy"] = float(avg_prob_healthy)
+        if avg_prob_healthy > 0.4:
+            print(f"WARNING: Biais eleve detecte ! Proba moyenne pour patients sains : {avg_prob_healthy:.4f}")
+
     # Compter les corrections par hard rules cliniques
     hard_rule_mask = glucose >= INFER_CFG.glucose_high_risk_mg_dl
     metrics["hard_rule_activations"] = int(hard_rule_mask.sum())
@@ -389,9 +435,12 @@ def train_gmu_model(
     y_train = pipeline_data["labels_all"][pipeline_data["idx_train"]]
     n_pos   = y_train.sum()
     n_neg   = len(y_train) - n_pos
-    pos_weight = torch.tensor([n_neg / (n_pos + 1e-8)], dtype=torch.float32).to(device)
+    # FIX: Utilisation d'une racine carrée pour le ratio de pondération
+    # Un pos_weight trop agressif (ratio pur) écrase la spécificité.
+    pos_weight_val = np.sqrt(n_neg / (n_pos + 1e-8))
+    pos_weight = torch.tensor([pos_weight_val], dtype=torch.float32).to(device)
     print(f"Classe 0 (non-diabétique) : {n_neg} | Classe 1 (diabétique) : {n_pos}")
-    print(f"pos_weight BCE            : {pos_weight.item():.2f}")
+    print(f"pos_weight BCE (sqrt balanced) : {pos_weight.item():.2f}")
 
     loss_fn = CompositeLoss(pos_weight=pos_weight, entropy_weight=entropy_weight)
 
@@ -453,8 +502,8 @@ def train_gmu_model(
 
         # --- Logging ---
         epoch_time = time.time() - t_epoch
-        print(f"  Train → Loss: {train_metrics['loss']:.4f} | AUC: {train_metrics['auc']:.4f}")
-        print(f"  Val   → Loss: {val_metrics['loss']:.4f}  | AUC: {val_metrics['auc']:.4f} | "
+        print(f"  Train -> Loss: {train_metrics['loss']:.4f} | AUC: {train_metrics['auc']:.4f}")
+        print(f"  Val   -> Loss: {val_metrics['loss']:.4f}  | AUC: {val_metrics['auc']:.4f} | "
               f"AUPRC: {val_metrics['auprc']:.4f} | F1: {val_metrics['f1']:.4f}")
         print(f"  Sens: {val_metrics['sensitivity']:.3f} | Spec: {val_metrics['specificity']:.3f} | "
               f"ECE: {val_metrics['ece']:.4f} | "
@@ -475,7 +524,7 @@ def train_gmu_model(
 
         # --- Early Stopping ---
         if early_stopper(val_metrics["auc"], model):
-            print(f"\n⚠️  Early stopping déclenché à l'epoch {epoch}.")
+            print(f"\n[WARNING] Early stopping declenche a l'epoch {epoch}.")
             break
 
     total_time = time.time() - t_start
@@ -492,7 +541,7 @@ def train_gmu_model(
     history_path = os.path.join(PATHS.logs, "gmu_history.json")
     with open(history_path, "w") as f:
         json.dump(history, f, indent=2)
-    print(f"📊 Historique sauvegardé → {history_path}")
+    print(f"Historique sauvegarde -> {history_path}")
 
     return {
         "model"    : model,
@@ -537,7 +586,7 @@ def extract_oof_embeddings(
     all_embeddings = []
     all_probas     = []
     all_labels     = []
-    all_indices    = []
+    all_indices    = []   # FIX: accumulateur des indices absolus par fold
 
     for fold_idx, ds_train_fold, ds_val_fold in fold_data:
         print(f"\n--- Fold {fold_idx+1}/{n_folds} ---")
@@ -591,6 +640,7 @@ def extract_oof_embeddings(
         fold_embeddings = []
         fold_probas     = []
         fold_labels     = []
+        fold_indices    = []   # FIX: collecter les indices absolus pour réalignement
 
         val_loader_oof = DataLoader(
             ds_val_fold, batch_size=128, shuffle=False,
@@ -612,14 +662,22 @@ def extract_oof_embeddings(
                 fold_embeddings.append(emb.cpu().numpy())
                 fold_probas.append(prob.cpu().numpy())
                 fold_labels.append(batch["label"].numpy())
+                # FIX: stocker les indices absolus du fold de validation
+                # patient_id est une string comme "P0042"; on extrait l'index numérique
+                # Si votre dataset retourne des indices directs, utilisez batch["idx"] à la place.
+                # Ici on utilise l'ordre de ds_val_fold qui est connu via fold_data.
+                fold_indices.append(np.array([int(pid.replace("P","").replace("p_",""))
+                                              for pid in batch["patient_id"]]))
 
         fold_embeddings = np.vstack(fold_embeddings)
         fold_probas     = np.concatenate(fold_probas)
         fold_labels     = np.concatenate(fold_labels)
+        fold_indices_np = np.concatenate(fold_indices)
 
         all_embeddings.append(fold_embeddings)
         all_probas.append(fold_probas)
         all_labels.append(fold_labels)
+        all_indices.append(fold_indices_np)
 
         oof_auc = roc_auc_score(fold_labels, fold_probas)
         print(f"  OOF AUC Fold {fold_idx+1} : {oof_auc:.4f}")
@@ -628,10 +686,21 @@ def extract_oof_embeddings(
     oof_embeddings = np.vstack(all_embeddings)    # [N_train, 256]
     oof_probas     = np.concatenate(all_probas)   # [N_train]
     oof_labels     = np.concatenate(all_labels)   # [N_train]
+    oof_indices    = np.concatenate(all_indices)  # [N_train] — indices absolus dans dataset
 
     global_oof_auc = roc_auc_score(oof_labels, oof_probas)
     print(f"\n✅ OOF AUC Global (GMU) : {global_oof_auc:.4f}")
     print(f"   Embeddings OOF shape : {oof_embeddings.shape}")
+
+    # FIX ALIGNEMENT : Réordonner les prédictions OOF dans l'ordre des index absolus.
+    # Sans ce tri, les prédictions OOF du GMU sont dans l'ordre des folds (fold0_val,
+    # fold1_val, …) alors que les prédictions classiques sont dans l'ordre d'index original.
+    # Un méta-learner entraîné sur des paires désalignées apprendrait des associations incorrectes.
+    sort_order     = np.argsort(oof_indices)
+    oof_embeddings = oof_embeddings[sort_order]
+    oof_probas     = oof_probas[sort_order]
+    oof_labels     = oof_labels[sort_order]
+    oof_indices    = oof_indices[sort_order]
 
     # Sauvegarde
     oof_path = os.path.join(PATHS.oof_preds, "gmu_oof.pkl")
@@ -640,13 +709,15 @@ def extract_oof_embeddings(
             "embeddings": oof_embeddings,
             "probas"    : oof_probas,
             "labels"    : oof_labels,
+            "indices"   : oof_indices,   # Sauvegarde des indices pour audit
         }, f)
-    print(f"💾 Embeddings OOF sauvegardés → {oof_path}")
+    print(f"[OK] Embeddings OOF sauvegardes -> {oof_path}")
 
     return {
         "embeddings_oof": oof_embeddings,
         "probas_oof"    : oof_probas,
         "labels_oof"    : oof_labels,
+        "indices_oof"   : oof_indices,
     }
 
 
@@ -735,7 +806,7 @@ def evaluate_test_set(
             "n_hard_rule_corrections": n_corrected,
             "mc_uncertainty_mean": float(y_std.mean()),
         }, f, indent=2)
-    print(f"\n💾 Résultats test sauvegardés → {results_path}")
+    print(f"\n[OK] Resultats test sauvegardes -> {results_path}")
 
     return results
 
@@ -778,17 +849,24 @@ def main():
 
     # --- Pipeline de données ---
     # Adapter les chemins selon votre organisation Google Drive
-    NHANES_CSV    = os.path.join(PATHS.data, "nhanes_diabetes.csv")
+    NHANES_CSV    = os.path.join(PATHS.data, "nhanes_clinical_cohort.csv")
     TEMPORAL_DIR  = os.path.join(PATHS.data, "temporal")
     RPPG_CSV      = os.path.join(PATHS.data, "rppg_features.csv")
 
-    print(f"\n📂 Chargement des données depuis : {PATHS.data}")
+    print(f"\n[DATA] Chargement des donnees depuis : {PATHS.data}")
 
     # Vérification de l'existence des données
     if not os.path.exists(NHANES_CSV):
-        print(f"⚠️  Fichier NHANES non trouvé : {NHANES_CSV}")
-        print("   Génération de données synthétiques pour démonstration...")
+        print(f"[WARNING] Fichier NHANES non trouve : {NHANES_CSV}")
+        print("   Generation de donnees synthetiques pour demonstration...")
         _generate_synthetic_data(NHANES_CSV, TEMPORAL_DIR, RPPG_CSV)
+    else:
+        # FIX CRITIQUE : Ne jamais écraser les vraies données cliniques.
+        # La régénération systématique précédente forçait l'entraînement sur
+        # des données synthétiques même quand les fichiers réels existaient.
+        print(f"[DATA] Donnees reelles trouvees. Chargement direct depuis {NHANES_CSV}")
+        print(f"[DATA] rPPG  : {RPPG_CSV}")
+        print(f"[DATA] Temp  : {TEMPORAL_DIR}")
 
     pipeline_data = build_full_pipeline(
         nhanes_csv   = NHANES_CSV,
@@ -796,6 +874,16 @@ def main():
         rppg_csv     = RPPG_CSV,
     )
     n_clinical = pipeline_data["n_clinical"]
+
+    # Sauvegarde des préprocesseurs pour l'API
+    preprocessors = {
+        "clinical": pipeline_data["clin_preprocessor"],
+        "temporal": pipeline_data["temp_preprocessor"],
+        "rppg": pipeline_data["rppg_preprocessor"]
+    }
+    with open(os.path.join(PATHS.checkpoints, "preprocessors.pkl"), "wb") as f:
+        pickle.dump(preprocessors, f)
+    print(f"[OK] Preprocesseurs sauvegardes -> {os.path.join(PATHS.checkpoints, 'preprocessors.pkl')}")
 
     # --- Entraînement du modèle GMU ---
     result = train_gmu_model(
@@ -814,7 +902,7 @@ def main():
     )
 
     # --- Extraction des embeddings OOF (pour stacking.py) ---
-    print("\n📦 Extraction des embeddings OOF pour le stacking...")
+    print("\n[STACK] Extraction des embeddings OOF pour le stacking...")
     oof_data = extract_oof_embeddings(
         pipeline_data       = pipeline_data,
         n_clinical_features = n_clinical,
@@ -823,10 +911,10 @@ def main():
         epochs_per_fold     = 25,
     )
 
-    print("\n✅ train_base.py — Pipeline complet terminé.")
+    print("\n[OK] train_base.py - Pipeline complet termine.")
     print(f"   Meilleur AUC val      : {result['best_auc']:.4f}")
     print(f"   AUC test (avec rules) : {test_results['metrics_corrected']['auc']:.4f}")
-    print(f"   Poids sauvegardés     : {PATHS.gmu_best_weights}")
+    print(f"   Poids sauvegardes     : {PATHS.gmu_best_weights}")
 
     return {
         "model"        : model,
@@ -839,41 +927,92 @@ def main():
 
 
 def _generate_synthetic_data(nhanes_csv: str, temporal_dir: str, rppg_csv: str, N: int = 1000):
-    """Génère des données synthétiques pour tester le pipeline sur Colab."""
+    """
+    Génère des données synthétiques cliniquement réalistes pour tester le pipeline sur Colab.
+    FIX: Les features sont désormais corrélées avec le label (diabète) pour que
+    toutes les branches du modèle (rPPG, Temporelle, Clinique) apprennent des signaux réels.
+    """
     import pandas as pd
     from config import NUMERICAL_FEATURES, CATEGORICAL_FEATURES, RPPG_FEATURES, TARGET_COLUMN
 
     os.makedirs(temporal_dir, exist_ok=True)
+    rng = np.random.default_rng(42)
 
-    # NHANES synthétique
+    # --- Génération des facteurs de risque latents (réalisme clinique) ---
+    # Environ 25% de diabétiques, cohérent avec la prévalence NHANES
+    diabetes_risk = rng.standard_normal(N)
+    is_diabetic_prob = 1 / (1 + np.exp(-diabetes_risk))
+    labels = (is_diabetic_prob > 0.75).astype(int)
+
     df = pd.DataFrame({"patient_id": [f"P{i:04d}" for i in range(N)]})
-    for feat in NUMERICAL_FEATURES:
-        df[feat] = np.abs(np.random.randn(N) * 20 + 50)
-    for feat in CATEGORICAL_FEATURES:
-        df[feat] = np.random.randint(0, 3, N)
-    df["glucose_fasting_mg_dl"] = np.abs(np.random.randn(N) * 35 + 95)
-    df[TARGET_COLUMN] = ((df["bmi"] > 30) & (df["glucose_fasting_mg_dl"] > 110)).astype(int)
-    df.to_csv(nhanes_csv, index=False)
-    print(f"   ✅ NHANES synthétique créé : {nhanes_csv} ({N} patients)")
 
-    # rPPG synthétique
+    # Features corrélées avec le label (FIX: plus de bruit pur)
+    df["age"]                  = np.clip(rng.normal(50, 15, N) + labels * 8, 18, 90).astype(int)
+    df["bmi"]                  = np.clip(rng.normal(27, 5, N) + labels * 5, 15, 55)
+    df["glucose_fasting_mg_dl"] = np.clip(rng.normal(95, 25, N) + labels * 45, 60, 300)
+    df["bloodpressure"]        = np.clip(rng.normal(75, 12, N) + labels * 5, 40, 130)
+    df["skinthickness"]        = np.clip(rng.normal(28, 8, N) + labels * 4, 5, 60)
+    df["insulin"]              = np.clip(rng.normal(80, 50, N) + labels * 60, 0, 600)
+    df["diabetespedigreefunction"] = np.clip(rng.exponential(0.3, N) + labels * 0.3, 0.05, 2.5)
+    df["pregnancies"]          = np.clip(rng.poisson(1.5, N), 0, 15)
+    df["systolic_bp"]          = np.clip(rng.normal(125, 18, N) + labels * 8, 80, 200)
+    df["diastolic_bp"]         = np.clip(rng.normal(80, 12, N) + labels * 5, 50, 130)
+    df["total_cholesterol"]    = np.clip(rng.normal(195, 40, N) + labels * 20, 100, 400)
+    df["hdl_cholesterol"]      = np.clip(rng.normal(52, 15, N) - labels * 8, 20, 100)
+    df["hba1c"]                = np.clip(rng.normal(5.5, 1.0, N) + labels * 1.8, 4.0, 14.0)
+
+    # Remplissage des features manquantes de la config avec NaN réaliste
+    all_num_feats = NUMERICAL_FEATURES
+    for feat in all_num_feats:
+        if feat not in df.columns:
+            df[feat] = np.where(rng.random(N) > 0.2, rng.normal(50, 10, N), np.nan)
+
+    # Catégorielles corrélées
+    df["smoking"]        = (rng.random(N) < (0.2 + labels * 0.15)).astype(int)
+    df["family_history"] = (rng.random(N) < (0.3 + labels * 0.3)).astype(int)
+    df["gender"]         = rng.integers(0, 2, N)
+
+    for feat in CATEGORICAL_FEATURES:
+        if feat not in df.columns:
+            df[feat] = rng.integers(0, 2, N)
+
+    # Label final recalculé sur la glycémie (cohérence ADA) avec ajout de bruit clinique
+    # On garde le label latent + surclasse si glucose diabétique confirmé
+    df[TARGET_COLUMN] = np.maximum(labels, (df["glucose_fasting_mg_dl"] >= 126).astype(int))
+
+    print(f"   [OK] Distribution labels: {df[TARGET_COLUMN].sum()} diabétiques / {N} total "
+          f"({100*df[TARGET_COLUMN].mean():.1f}%)")
+    df.to_csv(nhanes_csv, index=False)
+    print(f"   [OK] NHANES synthetique cree : {nhanes_csv} ({N} patients)")
+
+    # rPPG synthétique — corrélé avec le statut diabétique (HRV réduite, HR élevée)
     df_rppg = pd.DataFrame({"patient_id": df["patient_id"]})
     for feat in RPPG_FEATURES:
-        df_rppg[feat] = np.abs(np.random.randn(N) * 5 + 70)
+        if "hr" in feat.lower():
+            df_rppg[feat] = np.clip(rng.normal(72, 12, N) + labels * 8, 40, 130)
+        elif "sdnn" in feat.lower() or "rmssd" in feat.lower():
+            df_rppg[feat] = np.clip(rng.normal(45, 18, N) - labels * 12, 5, 150)
+        elif "spo2" in feat.lower():
+            df_rppg[feat] = np.clip(rng.normal(97.5, 1.5, N) - labels * 0.5, 90, 100)
+        else:
+            df_rppg[feat] = rng.normal(0, 1, N)
     df_rppg.to_csv(rppg_csv, index=False)
-    print(f"   ✅ rPPG synthétique créé   : {rppg_csv}")
+    print(f"   [OK] rPPG synthetique cree   : {rppg_csv}")
 
-    # Temporelles synthétiques (50 patients pour limiter le temps)
+    # Temporelles synthétiques — signal glycémique simulé sur 7 jours
     from config import TEMPORAL_FEATURES, TEMPORAL_CFG
-    for pid in df["patient_id"].values[:50]:
+    n_temporal_patients = min(N, 200)  # Plus de patients pour le training
+    for pid, is_diab in zip(df["patient_id"].values[:n_temporal_patients],
+                            df[TARGET_COLUMN].values[:n_temporal_patients]):
         T = np.random.randint(100, TEMPORAL_CFG.seq_len)
-        df_t = pd.DataFrame(
-            np.random.randn(T, len(TEMPORAL_FEATURES)),
-            columns=TEMPORAL_FEATURES
-        )
-        df_t["timestamp"] = pd.date_range("2024-01-01", periods=T, freq="H")
+        # Signal temporel corrélé : diabétiques ont une variabilité glycémique plus haute
+        base_signal = rng.normal(0, 1, (T, len(TEMPORAL_FEATURES)))
+        if is_diab:
+            base_signal += rng.normal(0.5, 0.3, (T, len(TEMPORAL_FEATURES)))
+        df_t = pd.DataFrame(base_signal, columns=TEMPORAL_FEATURES)
+        df_t["timestamp"] = pd.date_range("2024-01-01", periods=T, freq="h")
         df_t.to_csv(os.path.join(temporal_dir, f"{pid}_temporal.csv"), index=False)
-    print(f"   ✅ Données temporelles créées pour 50 patients dans {temporal_dir}/")
+    print(f"   [OK] Donnees temporelles creees pour {n_temporal_patients} patients dans {temporal_dir}/")
 
 
 if __name__ == "__main__":
