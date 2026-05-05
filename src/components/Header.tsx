@@ -43,10 +43,11 @@ export default function Header() {
     // Dropdowns still need manual logic because they are part of the template's structure
     const dropdowns = document.querySelectorAll('.navmenu .toggle-dropdown');
     dropdowns.forEach(navmenu => {
-      const handleClick = function(e: Event) {
+      const handleClick = (e: Event) => {
         e.preventDefault();
-        (this as HTMLElement).parentNode?.classList.toggle('active');
-        const nextEl = (this as HTMLElement).parentNode?.nextElementSibling;
+        const target = e.currentTarget as HTMLElement;
+        target.parentElement?.classList.toggle('active');
+        const nextEl = target.parentElement?.nextElementSibling;
         if (nextEl) nextEl.classList.toggle('dropdown-active');
         e.stopImmediatePropagation();
       };
@@ -116,7 +117,7 @@ export default function Header() {
                     My Dashboard
                   </Link>
                 </li>
-                <li className="d-xl-none"><a href="#" onClick={() => signOut({ callbackUrl: '/' })}>Sign Out</a></li>
+                <li className="d-xl-none"><Link href="#" onClick={() => signOut({ callbackUrl: '/' })}>Sign Out</Link></li>
               </>
             )}
             
@@ -124,7 +125,7 @@ export default function Header() {
               <li className="d-xl-none"><Link href="/login">Login</Link></li>
             )}
 
-            <li className="dropdown"><a href="#"><span>Resources</span> <i className="bi bi-chevron-down toggle-dropdown"></i></a>
+            <li className="dropdown"><Link href="#"><span>Resources</span> <i className="bi bi-chevron-down toggle-dropdown"></i></Link>
               <ul>
                 <li><Link href="/faq" className={isActive("/faq")}>FAQ</Link></li>
                 <li><Link href="/terms">Terms</Link></li>

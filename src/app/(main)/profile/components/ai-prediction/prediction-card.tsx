@@ -8,6 +8,7 @@ import { Brain, FileDown, Info, X } from 'lucide-react'
 import { usePrediction } from '@/hooks/usePrediction'
 import { generateMedicalReport } from '@/utils/report'
 import { useSession } from 'next-auth/react'
+import { cn } from '@/lib/utils'
 
 interface PredictionCardProps {
   prediction: DiabetesPrediction | null

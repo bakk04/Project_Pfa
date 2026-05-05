@@ -9,6 +9,7 @@ import { ThemeProvider } from 'next-themes';
 
 import Sidebar from './components/Sidebar';
 import Topbar from './components/Topbar';
+import StyleSheetLoader from '@/components/StyleSheetLoader';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -23,16 +24,19 @@ export default function DashboardAdminLayout({
   const toggleSidebar = () => setIsSidebarCollapsed(!isSidebarCollapsed);
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
 
+  const externalStyles = [
+    "/dashboardAdmin/assets/libs/@phosphor-icons/web/duotone/style.css",
+    "/dashboardAdmin/assets/libs/@phosphor-icons/web/regular/style.css",
+    "/dashboardAdmin/assets/libs/@phosphor-icons/web/fill/style.css",
+    "/dashboardAdmin/assets/libs/lucide-static/font/lucide.css",
+    "/dashboardAdmin/assets/libs/simplebar/simplebar.min.css",
+    "/dashboardAdmin/assets/libs/flatpickr/flatpickr.min.css"
+  ];
+
   return (
     <ThemeProvider attribute="class" defaultTheme="light">
       <div className={`dashboard-admin-root ${inter.className}`}>
-        {/* External CSS from public assets */}
-        <link rel="stylesheet" href="/dashboardAdmin/assets/libs/@phosphor-icons/web/duotone/style.css" />
-        <link rel="stylesheet" href="/dashboardAdmin/assets/libs/@phosphor-icons/web/regular/style.css" />
-        <link rel="stylesheet" href="/dashboardAdmin/assets/libs/@phosphor-icons/web/fill/style.css" />
-        <link rel="stylesheet" href="/dashboardAdmin/assets/libs/lucide-static/font/lucide.css" />
-        <link rel="stylesheet" href="/dashboardAdmin/assets/libs/simplebar/simplebar.min.css" />
-        <link rel="stylesheet" href="/dashboardAdmin/assets/libs/flatpickr/flatpickr.min.css" />
+        <StyleSheetLoader hrefs={externalStyles} />
 
         <div className="flex min-h-screen overflow-x-hidden">
           <Sidebar 

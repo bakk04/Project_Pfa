@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { signOut, useSession } from 'next-auth/react';
+import Image from 'next/image'
 
 export function UserMenu() {
   const { data: session } = useSession();
@@ -60,7 +61,7 @@ export function UserMenu() {
         }}
       >
         {imageUrl ? (
-          <img src={imageUrl} alt={user.name || ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <Image src={imageUrl} alt={user.name || ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         ) : (
           <span style={{ letterSpacing: '0.5px', textShadow: '0 1px 2px rgba(0,0,0,0.1)' }}>{firstInitial}</span>
         )}

@@ -110,16 +110,13 @@ export function VitalTestOnboarding({ userData, onComplete, onCancel }: Onboardi
 
     try {
       // REAL CAPACITOR HEALTHKIT / GOOGLE FIT INTEGRATION
-      await Health.requestAuthorization([
-        { variable: 'heartRate', accessType: 'read' },
-        { variable: 'bloodPressureSystolic', accessType: 'read' },
-        { variable: 'bloodPressureDiastolic', accessType: 'read' },
-        { variable: 'oxygenSaturation', accessType: 'read' },
-      ])
-      
+      await Health.requestAuthorization({
+        read: ['heartRate', 'bloodPressureSystolic', 'bloodPressureDiastolic', 'oxygenSaturation'] as any,
+        write: []
+      })
+
       setFormData(prev => ({ ...prev, healthConnected: true }))
-    } catch (err: any) {
-      console.error('Health sync failed:', err)
+    } catch (err: any) {      console.error('Health sync failed:', err)
       setSyncError('Failed to sync. Please ensure permissions are granted.')
     } finally {
       setIsSyncing(false)

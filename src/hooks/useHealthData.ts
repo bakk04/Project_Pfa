@@ -11,7 +11,7 @@ export function useHealthData() {
 
   // Map to the old structure to minimize breaking changes in UI components
   const vitals = {
-    heartRate: data.heartRate,
+    heartRate: data.heartRate ?? undefined,
     spO2: data.spO2,
     systolicBP: data.systolicBP,
     diastolicBP: data.diastolicBP,
@@ -23,6 +23,7 @@ export function useHealthData() {
   const activity = {
     steps: data.steps,
     calories: data.calories,
+    exerciseTime: 0,
     date: new Date(data.timestamp)
   }
 

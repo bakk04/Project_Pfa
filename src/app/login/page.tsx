@@ -41,19 +41,19 @@ function LoginContent() {
   const [errors, setErrors] = useState<ErrorState>({});
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
-  const { status } = useSession();
+  const { data: currentSession, status } = useSession();
 
   // Redirect if already authenticated
   useEffect(() => {
-    if (status === 'authenticated' && session?.user) {
-      const role = (session.user as any).role;
+    if (status === 'authenticated' && currentSession?.user) {
+      const role = (currentSession.user as any).role;
       if (role === 'admin') {
         router.replace('/dashboardAdmin');
       } else {
         router.replace('/profile');
       }
     }
-  }, [status, session, router]);
+  }, [status, currentSession, router]);
   
   // Manage body styles to prevent double scrollbars
   useEffect(() => {
@@ -285,7 +285,7 @@ function LoginContent() {
             <div className={`${styles.field} ${errors.password ? styles.fieldErr : ''}`}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <label className={styles.label} htmlFor="password">Password</label>
-                <a href="#" className={styles.forgotLink} style={{ fontSize: '0.8rem', color: '#049ebb', fontWeight: 600, textDecoration: 'none', marginBottom: '0.6rem' }}>Forgot password?</a>
+                <Link href="#" className={styles.forgotLink} style={{ fontSize: '0.8rem', color: '#049ebb', fontWeight: 600, textDecoration: 'none', marginBottom: '0.6rem' }}>Forgot password?</Link>
               </div>
               <div className={styles.inputIcon}>
                 <Lock size={18} />
@@ -379,7 +379,7 @@ function LoginContent() {
           {/* Footer */}
           <div className={styles.footer}>
             <p>
-              Don't have an account?{' '}
+              Don&apos;t have an account?{' '}
               <Link href="/register" className={styles.signupLink}>
                 Create an account
               </Link>

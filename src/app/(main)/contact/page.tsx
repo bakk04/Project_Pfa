@@ -101,7 +101,7 @@ export default function Contact() {
           <nav aria-label="breadcrumb">
             <ol className="breadcrumb">
               <li className="breadcrumb-item"><Link href="/"><i className="bi bi-house"></i> Home</Link></li>
-              <li className="breadcrumb-item"><a href="#">Category</a></li>
+              <li className="breadcrumb-item"><Link href="#">Category</Link></li>
               <li className="breadcrumb-item active current">Contact</li>
             </ol>
           </nav>
@@ -168,11 +168,11 @@ export default function Contact() {
               <div className="social-links-panel">
                 <h5>Follow Us</h5>
                 <div className="social-icons">
-                  <a href="#"><i className="bi bi-facebook"></i></a>
-                  <a href="#"><i className="bi bi-twitter-x"></i></a>
-                  <a href="#"><i className="bi bi-instagram"></i></a>
-                  <a href="#"><i className="bi bi-linkedin"></i></a>
-                  <a href="#"><i className="bi bi-youtube"></i></a>
+                  <Link href="#"><i className="bi bi-facebook"></i></Link>
+                  <Link href="#"><i className="bi bi-twitter-x"></i></Link>
+                  <Link href="#"><i className="bi bi-instagram"></i></Link>
+                  <Link href="#"><i className="bi bi-linkedin"></i></Link>
+                  <Link href="#"><i className="bi bi-youtube"></i></Link>
                 </div>
               </div>
             </div>

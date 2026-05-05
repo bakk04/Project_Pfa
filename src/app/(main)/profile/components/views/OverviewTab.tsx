@@ -29,6 +29,7 @@ import {
   X
 } from 'lucide-react'
 import { useVitalStore } from '@/store/vital-store'
+import Image from 'next/image'
 
 const WeeklyActivityChart = dynamic(() => import('../charts/WeeklyActivityChart'), { 
   ssr: false,
@@ -103,9 +104,9 @@ export function OverviewTab({ onStartTest }: OverviewTabProps) {
   }
 
   const hasPrediction = !!currentPrediction
-  const riskLevel = hasPrediction ? currentPrediction.riskLevel : 'low'
+  const riskLevel = hasPrediction ? (currentPrediction.risk_status?.toLowerCase() || 'low') : 'low'
   const healthScore = hasPrediction
-    ? Math.round(100 - ((currentPrediction.final_probability || currentPrediction.probability || 0) * 100))
+    ? Math.round(100 - ((currentPrediction.final_probability || 0) * 100))
     : 0
 
   const progressItems = useMemo(() => [
@@ -414,7 +415,7 @@ export function OverviewTab({ onStartTest }: OverviewTabProps) {
               <div className="w-28 h-28 rounded-full p-1.5 bg-gradient-to-br from-sh-green to-sh-green/60 shadow-lg shadow-sh-green/25 animate-sh-float">
                 <div className="w-full h-full rounded-full bg-sh-card overflow-hidden p-1">
                   {profileImage ? (
-                    <img
+                    <Image
                       src={profileImage}
                       alt="Profile"
                       className="w-full h-full rounded-full object-cover"
@@ -535,7 +536,7 @@ export function OverviewTab({ onStartTest }: OverviewTabProps) {
                         <span className="text-[10px] text-sh-sub uppercase">BPM</span>
                       </div>
                       <div className="flex flex-col items-end">
-                        <span className="font-bold text-sh-text">{((session.metrics.final_probability || session.metrics.probability || 0) * 100).toFixed(0)}%</span>
+                        <span className="font-bold text-sh-text">{((session.metrics.probability || 0) * 100).toFixed(0)}%</span>
                         <span className="text-[10px] text-sh-sub uppercase">Conf</span>
                       </div>
                       <div className={cn("px-3 py-1 rounded-full text-[11px] font-bold capitalize", getRiskColor(session.metrics.risk_status || 'low'))}>

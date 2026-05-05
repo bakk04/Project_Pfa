@@ -197,11 +197,10 @@ export default function DashboardPage() {
               title="Biometric Stream Intelligence" 
             />
           ) : (
-            <div style={{ height: '400px', display: 'flex', alignItems: 'center', justifyCenter: 'center' }}>
+            <div style={{ height: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>        
                <span className="sys-text-label">Compiling Analytics...</span>
             </div>
-          )}
-        </div>
+          )}        </div>
       </motion.div>
 
       {/* System Metrics Sidebar within Grid */}

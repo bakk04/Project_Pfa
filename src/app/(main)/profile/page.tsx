@@ -26,9 +26,14 @@ export default function ProfilePage() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [isSidebarOpenMobile, setIsSidebarOpenMobile] = useState(false)
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
   
   const setOnboardingData = useVitalStore((state) => state.setOnboardingData)
   const { triggerSync } = useHealthData()
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Initialize userData with session data if available
   useEffect(() => {
@@ -44,7 +49,6 @@ export default function ProfilePage() {
   }, [session, userData])
 
   useEffect(() => {
-    document.body.className = 'hold-transition light-skin sidebar-mini theme-primary profile-dashboard-active'
     if (isSidebarCollapsed) {
       document.body.classList.add('sidebar-collapse')
     } else {
@@ -55,7 +59,6 @@ export default function ProfilePage() {
     } else {
       document.body.classList.remove('sidebar-open')
     }
-    return () => { document.body.className = '' }
   }, [isSidebarCollapsed, isSidebarOpenMobile])
 
   useEffect(() => {
@@ -127,7 +130,7 @@ export default function ProfilePage() {
         activeTab={activeTab} 
         onTabChange={setActiveTab} 
         isCollapsed={isSidebarCollapsed}
-        isOpen={isSidebarOpenMobile || (typeof window !== 'undefined' && window.innerWidth >= 1024)}
+        isOpen={mounted ? (isSidebarOpenMobile || window.innerWidth >= 1024) : false}
         onClose={() => setIsSidebarOpenMobile(false)}
       />
 

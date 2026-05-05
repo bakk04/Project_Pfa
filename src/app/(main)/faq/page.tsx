@@ -16,7 +16,7 @@ export default function FAQ() {
           <nav aria-label="breadcrumb">
             <ol className="breadcrumb">
               <li className="breadcrumb-item"><Link href="/"><i className="bi bi-house"></i> Home</Link></li>
-              <li className="breadcrumb-item"><a href="#">Category</a></li>
+              <li className="breadcrumb-item"><Link href="#">Category</Link></li>
               <li className="breadcrumb-item active current">Frequently Asked Questions</li>
             </ol>
           </nav>
@@ -24,7 +24,7 @@ export default function FAQ() {
 
         <div className="title-wrapper">
           <h1>Frequently Asked Questions</h1>
-          <p>Find answers to common questions regarding Sehati's AI-powered diabetes detection platform.</p>
+          <p>Find answers to common questions regarding Sehati&apos;s AI-powered diabetes detection platform.</p>
         </div>
       </div>
 
@@ -41,18 +41,18 @@ export default function FAQ() {
                   <h3>Still Have Questions?</h3>
                   <p>Our dedicated medical support team is ready to answer any questions about our biometrics technology and proactive care plans.</p>
                   <div className="contact-options">
-                    <a href="mailto:info@sehati.com" className="contact-option">
+                    <Link href="mailto:info@sehati.com" className="contact-option">
                       <i className="bi bi-envelope"></i>
                       <span>Email Support</span>
-                    </a>
-                    <a href="#" className="contact-option">
+                    </Link>
+                    <Link href="#" className="contact-option">
                       <i className="bi bi-chat-dots"></i>
                       <span>Live Chat</span>
-                    </a>
-                    <a href="tel:+15551234567" className="contact-option">
+                    </Link>
+                    <Link href="tel:+15551234567" className="contact-option">
                       <i className="bi bi-telephone"></i>
                       <span>Call Us</span>
-                    </a>
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -62,7 +62,7 @@ export default function FAQ() {
               <div className="faq-accordion">
                 <div className="faq-item faq-active">
                   <div className="faq-header" onClick={toggleFaq} style={{ cursor: 'pointer' }}>
-                    <h3>How does Sehati's AI detection work?</h3>
+                    <h3>How does Sehati&apos;s AI detection work?</h3>
                     <i className="bi bi-chevron-down faq-toggle"></i>
                   </div>
                   <div className="faq-content">

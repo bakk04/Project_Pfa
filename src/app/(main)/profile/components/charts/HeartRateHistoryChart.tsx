@@ -49,7 +49,7 @@ export default function HeartRateHistoryChart({ data }: HeartRateHistoryChartPro
           }}
           labelStyle={{ color: 'var(--foreground)', fontWeight: 600, marginBottom: '4px' }}
           itemStyle={{ color: '#EF5350' }}
-          formatter={(value: number) => [`${value} bpm`, 'Heart Rate']}
+          formatter={(value: any) => [`${value} bpm`, 'Heart Rate']}
         />
         <Area 
           type="monotone" 

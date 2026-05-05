@@ -16,10 +16,10 @@ export default function Footer() {
               <p><strong>Email:</strong> <span>info@sehati.com</span></p>
             </div>
             <div className="social-links d-flex mt-4">
-              <a href="#"><i className="bi bi-twitter-x"></i></a>
-              <a href="#"><i className="bi bi-facebook"></i></a>
-              <a href="#"><i className="bi bi-instagram"></i></a>
-              <a href="#"><i className="bi bi-linkedin"></i></a>
+              <Link href="#"><i className="bi bi-twitter-x"></i></Link>
+              <Link href="#"><i className="bi bi-facebook"></i></Link>
+              <Link href="#"><i className="bi bi-instagram"></i></Link>
+              <Link href="#"><i className="bi bi-linkedin"></i></Link>
             </div>
           </div>
 
@@ -48,22 +48,22 @@ export default function Footer() {
           <div className="col-lg-2 col-md-3 footer-links">
             <h4>Hic solutasetp</h4>
             <ul>
-              <li><a href="#">Molestiae accusamus iure</a></li>
-              <li><a href="#">Excepturi dignissimos</a></li>
-              <li><a href="#">Suscipit distinctio</a></li>
-              <li><a href="#">Dilecta</a></li>
-              <li><a href="#">Sit quas consectetur</a></li>
+              <li><Link href="#">Molestiae accusamus iure</Link></li>
+              <li><Link href="#">Excepturi dignissimos</Link></li>
+              <li><Link href="#">Suscipit distinctio</Link></li>
+              <li><Link href="#">Dilecta</Link></li>
+              <li><Link href="#">Sit quas consectetur</Link></li>
             </ul>
           </div>
 
           <div className="col-lg-2 col-md-3 footer-links">
             <h4>Nobis illum</h4>
             <ul>
-              <li><a href="#">Ipsam</a></li>
-              <li><a href="#">Laudantium dolorum</a></li>
-              <li><a href="#">Dinera</a></li>
-              <li><a href="#">Trodelas</a></li>
-              <li><a href="#">Flexo</a></li>
+              <li><Link href="#">Ipsam</Link></li>
+              <li><Link href="#">Laudantium dolorum</Link></li>
+              <li><Link href="#">Dinera</Link></li>
+              <li><Link href="#">Trodelas</Link></li>
+              <li><Link href="#">Flexo</Link></li>
             </ul>
           </div>
         </div>
@@ -72,7 +72,7 @@ export default function Footer() {
       <div className="container copyright text-center mt-4">
         <p>© <span>Copyright</span> <strong className="px-1 sitename">Sehati</strong> <span>All Rights Reserved</span></p>
         <div className="credits">
-          Designed by <a href="https://bootstrapmade.com/">BootstrapMade</a>
+          Designed by <Link href="https://bootstrapmade.com/">BootstrapMade</Link>
         </div>
       </div>
     </footer>

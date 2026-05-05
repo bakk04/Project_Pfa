@@ -35,6 +35,7 @@ import {
   Activity,
   UserPlus
 } from 'lucide-react';
+import Image from 'next/image'
 
 // Professional Moroccan Flag SVG Component
 const MoroccoFlag = ({ size = 20 }: { size?: number }) => (
@@ -483,7 +484,7 @@ export default function RegisterPage() {
           {/* Logo mark */}
           <div className={`${styles.logoMark} ${welcomePhase >= 0 ? styles.logoIn : ''}`}>
             <div className={styles.logoHex}>
-              <img 
+              <Image 
                 src="/assets/img/logo.png" 
                 alt="Sehati Logo" 
                 style={{ width: '64px', height: '64px', objectFit: 'contain' }} 
@@ -747,8 +748,8 @@ export default function RegisterPage() {
                     )}
                   </div>
                   <span>
-                    I agree to the <a href="#" className={styles.link}>Terms of Service</a> and{' '}
-                    <a href="#" className={styles.link}>Privacy Policy</a>
+                    I agree to the <Link href="#" className={styles.link}>Terms of Service</Link> and{' '}
+                    <Link href="#" className={styles.link}>Privacy Policy</Link>
                   </span>
                 </label>
                 {errors.acceptTerms && <span className={styles.errMsg}>{errors.acceptTerms}</span>}

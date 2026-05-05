@@ -17,7 +17,7 @@ export function generateMedicalReport(prediction: DiabetesPrediction, clinicalDa
   }
 
   // Define Colors
-  const colors = {
+  const colors: Record<string, [number, number, number]> = {
     primary: [44, 62, 80],    // Slate Blue
     secondary: [52, 199, 89], // Sehati Green
     text: [51, 51, 51],
@@ -69,7 +69,7 @@ export function generateMedicalReport(prediction: DiabetesPrediction, clinicalDa
     body: patientData,
     theme: 'plain',
     styles: { fontSize: 9, cellPadding: 2, textColor: colors.text },
-    columnStyles: { 0: { fontStyle: 'bold', width: 30 }, 2: { fontStyle: 'bold', width: 30 } }
+    columnStyles: { 0: { fontStyle: 'bold', cellWidth: 30 }, 2: { fontStyle: 'bold', cellWidth: 30 } }
   })
 
   // 2. Risk Assessment Summary
@@ -89,7 +89,7 @@ export function generateMedicalReport(prediction: DiabetesPrediction, clinicalDa
   doc.setFontSize(18)
   doc.text(`DIABETES RISK STATUS: ${riskStatus}`, 105, startY2 + 20, { align: 'center' })
   doc.setFontSize(9)
-  doc.text(`CONFIDENCE SCORE: ${((prediction.final_probability || prediction.probability || 0) * 100).toFixed(1)}%`, 105, startY2 + 28, { align: 'center' })
+  doc.text(`CONFIDENCE SCORE: ${((prediction.final_probability || 0) * 100).toFixed(1)}%`, 105, startY2 + 28, { align: 'center' })
 
   // 3. Clinical Indicators
   const startY3 = startY2 + 45
@@ -141,7 +141,7 @@ export function generateMedicalReport(prediction: DiabetesPrediction, clinicalDa
     body: recommendations,
     theme: 'plain',
     styles: { fontSize: 8, cellPadding: 3 },
-    columnStyles: { 0: { fontStyle: 'bold', width: 30 } }
+    columnStyles: { 0: { fontStyle: 'bold', cellWidth: 30 } }
   })
 
   // Footer / Signatures

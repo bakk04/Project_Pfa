@@ -1,4 +1,5 @@
 import '@/styles/samsung-health.css'
+import StyleSheetLoader from '@/components/StyleSheetLoader'
 
 export const metadata = {
   title: 'Profile | Sehati Medical Intelligence Dashboard',
@@ -10,13 +11,16 @@ export default function ProfileLayout({
 }: {
   children: React.ReactNode
 }) {
+  const profileStyles = [
+    "/dashboard/css/vendors_css.css",
+    "/dashboard/css/style.css",
+    "/dashboard/css/skin_color.css",
+    "/dashboard/css/custom.css"
+  ];
+
   return (
     <>
-      {/* Bootstrap CSS Dependencies */}
-      <link rel="stylesheet" href="/dashboard/css/vendors_css.css" />
-      <link rel="stylesheet" href="/dashboard/css/style.css" />
-      <link rel="stylesheet" href="/dashboard/css/skin_color.css" />
-      <link rel="stylesheet" href="/dashboard/css/custom.css" />
+      <StyleSheetLoader hrefs={profileStyles} />
       
       <div className="samsung-health-dashboard min-h-screen bg-background">
         {children}

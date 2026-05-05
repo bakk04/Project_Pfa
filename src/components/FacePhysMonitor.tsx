@@ -10,7 +10,8 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { RPPG_CONFIG, USER_FEEDBACK } from '@/lib/constants';
 import { toast } from 'sonner';
-
+import Link from "next/link"
+import Image from "next/image"
 // --- V4 UTILS ---
 
 function isSkinPixelRobust(r: number, g: number, b: number): boolean {
@@ -1249,7 +1250,7 @@ const FacePhysMonitor: React.FC = () => {
                         </div>
                     </div>
 
-                    <a href="https://github.com/user-attachments/files/24302692/FacePhys2025.pdf"
+                    <Link href="https://github.com/user-attachments/files/24302692/FacePhys2025.pdf"
                     target="_blank" rel="noopener noreferrer" className={styles.navBtn} title="Research Paper">
                         <svg className={styles.navIcon} viewBox="0 0 24 24" aria-hidden="true">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -1259,13 +1260,13 @@ const FacePhysMonitor: React.FC = () => {
                             <polyline points="10 9 9 9 8 9"/>
                         </svg>
                         <span>Paper</span>
-                    </a>
+                    </Link>
                 </div>
 
-                <a href="https://ai.google.dev/edge" target="_blank" rel="noopener noreferrer" className={styles.litertBrand} title="Powered by LiteRT">
+                <Link href="https://ai.google.dev/edge" target="_blank" rel="noopener noreferrer" className={styles.litertBrand} title="Powered by LiteRT">
                     <span className={styles.litertText}>Powered by</span>
-                    <img src="/resource/litert_logo.png" alt="LiteRT" className={styles.litertLogo} />
-                </a>
+                    <Image src="/resource/litert_logo.png" alt="LiteRT" className={styles.litertLogo} />
+                </Link>
             </nav>
 
             <video ref={videoRef} playsInline muted style={{ display: 'none' }}></video>

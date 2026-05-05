@@ -9,7 +9,7 @@ export default function NotFound() {
           <nav aria-label="breadcrumb">
             <ol className="breadcrumb">
               <li className="breadcrumb-item"><Link href="/"><i className="bi bi-house"></i> Home</Link></li>
-              <li className="breadcrumb-item"><a href="#">Category</a></li>
+              <li className="breadcrumb-item"><Link href="#">Category</Link></li>
               <li className="breadcrumb-item active current">404</li>
             </ol>
           </nav>

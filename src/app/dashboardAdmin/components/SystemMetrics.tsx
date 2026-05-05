@@ -22,7 +22,7 @@ const SystemMetrics: React.FC<SystemMetricsProps> = ({ system, loading }) => {
   const isDark = theme === 'dark';
 
   const getGaugeOptions = (color: string) => ({
-    chart: { type: 'radialBar', sparkline: { enabled: true } },
+    chart: { type: 'radialBar' as const, sparkline: { enabled: true } },
     plotOptions: {
       radialBar: {
         hollow: { size: '60%' },
@@ -42,14 +42,13 @@ const SystemMetrics: React.FC<SystemMetricsProps> = ({ system, loading }) => {
       }
     },
     colors: [color],
-    stroke: { lineCap: 'round' }
+    stroke: { lineCap: 'round' as const }
   });
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyBetween: 'space-between', marginBottom: '2rem' }}>
-        <div style={{ flex: 1 }}>
-          <h4 className="sys-text-h2" style={{ marginBottom: '4px' }}>Infrastructure</h4>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem' }}>  
+        <div style={{ flex: 1 }}>          <h4 className="sys-text-h2" style={{ marginBottom: '4px' }}>Infrastructure</h4>
           <p className="sys-text-muted">Real-time core health</p>
         </div>
         <div style={{ 

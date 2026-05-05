@@ -18,6 +18,7 @@ import {
   Settings,
   Activity
 } from 'lucide-react'
+import Image from 'next/image'
 
 interface ModernHeaderProps {
   onToggleSidebar: () => void
@@ -218,7 +219,7 @@ export function ModernHeader({ onToggleSidebar, isSidebarCollapsed }: ModernHead
             )}
           >
             {hasImage ? (
-              <img
+              <Image
                 src={user!.image!}
                 alt="User avatar"
                 className="w-7 h-7 rounded-full object-cover"
