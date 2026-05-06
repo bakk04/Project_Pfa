@@ -1,7 +1,0 @@
-import sys
-import os
-sys.path.insert(0, os.getcwd())
-from config import NUMERICAL_FEATURES, CATEGORICAL_FEATURES
-print(f"NUMERICAL_FEATURES: {NUMERICAL_FEATURES} (len={len(NUMERICAL_FEATURES)})")
-print(f"CATEGORICAL_FEATURES: {CATEGORICAL_FEATURES} (len={len(CATEGORICAL_FEATURES)})")
-print(f"Total: {len(NUMERICAL_FEATURES) + len(CATEGORICAL_FEATURES)}")
