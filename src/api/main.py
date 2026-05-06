@@ -385,6 +385,15 @@ app = FastAPI(
     version="2.0.0",
 )
 
+@app.get("/")
+def root():
+    return {
+        "message": "Bienvenue sur l'API SEHATI AI - Prédiction du Diabète",
+        "docs": "/docs",
+        "health": "/health",
+        "status": "running"
+    }
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
