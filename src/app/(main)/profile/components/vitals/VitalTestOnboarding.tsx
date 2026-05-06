@@ -366,32 +366,32 @@ export function VitalTestOnboarding({ userData, onComplete, onCancel }: Onboardi
         className="w-full max-w-[540px] bg-[#f8f9fa] rounded-[36px] shadow-2xl overflow-hidden flex flex-col max-h-[95vh]"
       >
         {/* Header */}
-        <div className="px-8 pt-8 pb-6 bg-white z-10 sticky top-0 rounded-b-[32px] shadow-sm">
+        <div className="px-6 py-6 sm:px-8 sm:pt-8 sm:pb-6 bg-white z-10 sticky top-0 rounded-b-[32px] shadow-sm">
           <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-[18px] bg-sh-green/10 flex items-center justify-center text-sh-green">
-                <Activity className="w-6 h-6" />
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-[15px] sm:rounded-[18px] bg-sh-green/10 flex items-center justify-center text-sh-green">
+                <Activity className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
               <div>
-                <h2 className="text-[22px] font-bold text-gray-900 tracking-tight">Vital Test</h2>
-                <p className="text-[13px] text-gray-500 font-medium">Step {currentStep + 1} of {steps.length}</p>
+                <h2 className="text-[18px] sm:text-[22px] font-bold text-gray-900 tracking-tight">Vital Test</h2>
+                <p className="text-[12px] sm:text-[13px] text-gray-500 font-medium">Step {currentStep + 1} of {steps.length}</p>
               </div>
             </div>
             <button 
               onClick={onCancel}
-              className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:text-gray-700 hover:bg-gray-200 transition-all border-none outline-none focus:outline-none"
+              className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:text-gray-700 hover:bg-gray-200 transition-all border-none outline-none focus:outline-none"
             >
-              <X size={24} strokeWidth={2.5} />
+              <X size={20} className="sm:size-6" strokeWidth={2.5} />
             </button>
           </div>
 
           {/* Progress Bar */}
-          <div className="flex gap-2">
+          <div className="flex gap-1.5 sm:gap-2">
             {steps.map((_, i) => (
               <div 
                 key={i} 
                 className={cn(
-                  "h-1.5 flex-1 rounded-full transition-all duration-500",
+                  "h-1 sm:h-1.5 flex-1 rounded-full transition-all duration-500",
                   i <= currentStep ? "bg-sh-green" : "bg-gray-200"
                 )}
               />
@@ -400,7 +400,7 @@ export function VitalTestOnboarding({ userData, onComplete, onCancel }: Onboardi
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto p-6 sm:p-8 custom-scrollbar">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentStep}
@@ -409,9 +409,9 @@ export function VitalTestOnboarding({ userData, onComplete, onCancel }: Onboardi
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.25, ease: 'easeOut' }}
             >
-              <div className="mb-8 text-center sm:text-left">
-                <h3 className="text-[26px] font-bold text-gray-900 mb-2 tracking-tight">{steps[currentStep].title}</h3>
-                <p className="text-gray-500 text-[15px] leading-relaxed">{steps[currentStep].description}</p>
+              <div className="mb-6 sm:mb-8 text-center sm:text-left">
+                <h3 className="text-[22px] sm:text-[26px] font-bold text-gray-900 mb-2 tracking-tight">{steps[currentStep].title}</h3>
+                <p className="text-gray-500 text-[14px] sm:text-[15px] leading-relaxed">{steps[currentStep].description}</p>
               </div>
               
               {renderStepContent()}
@@ -420,12 +420,12 @@ export function VitalTestOnboarding({ userData, onComplete, onCancel }: Onboardi
         </div>
 
         {/* Footer */}
-        <div className="px-8 py-6 bg-white flex items-center justify-between sticky bottom-0 rounded-t-[32px] shadow-[0_-4px_20px_rgba(0,0,0,0.03)] border-t border-gray-100">
+        <div className="px-6 py-4 sm:px-8 sm:py-6 bg-white flex items-center justify-between sticky bottom-0 rounded-t-[32px] shadow-[0_-4px_20px_rgba(0,0,0,0.03)] border-t border-gray-100 gap-3">
           <button
             onClick={prevStep}
             className={cn(
-              "min-w-[140px] px-8 py-4 rounded-full text-[15px] font-bold transition-all duration-300 border-none outline-none focus:outline-none",
-              currentStep === 0 ? "opacity-0 pointer-events-none" : "text-gray-500 bg-gray-100 hover:text-gray-700 hover:bg-gray-200"
+              "min-w-[100px] sm:min-w-[140px] px-4 py-3 sm:px-8 sm:py-4 rounded-full text-[14px] sm:text-[15px] font-bold transition-all duration-300 border-none outline-none focus:outline-none",
+              currentStep === 0 ? "hidden" : "text-gray-500 bg-gray-100 hover:text-gray-700 hover:bg-gray-200"
             )}
           >
             Back
@@ -433,9 +433,12 @@ export function VitalTestOnboarding({ userData, onComplete, onCancel }: Onboardi
           
           <button
             onClick={nextStep}
-            className="min-w-[140px] flex items-center justify-center gap-2 px-8 py-4 bg-sh-green text-white rounded-full font-bold text-[15px] shadow-sm hover:bg-[#2db555] active:scale-[0.98] transition-all duration-300 border-none outline-none"
+            className={cn(
+              "flex-1 sm:flex-initial min-w-[120px] sm:min-w-[140px] flex items-center justify-center gap-2 px-6 py-3 sm:px-8 sm:py-4 bg-sh-green text-white rounded-full font-bold text-[14px] sm:text-[15px] shadow-sm hover:bg-[#2db555] active:scale-[0.98] transition-all duration-300 border-none outline-none",
+              currentStep === 0 && "w-full"
+            )}
           >
-            <span>{currentStep === steps.length - 1 ? 'Start Scan' : currentStep === 2 && !formData.healthConnected ? 'Skip / Next' : 'Next Step'}</span>
+            <span className="whitespace-nowrap">{currentStep === steps.length - 1 ? 'Start Scan' : currentStep === 2 && !formData.healthConnected ? 'Skip / Next' : 'Next Step'}</span>
             {currentStep === steps.length - 1 ? <ChevronRight size={18} /> : <ArrowRight size={18} />}
           </button>
         </div>

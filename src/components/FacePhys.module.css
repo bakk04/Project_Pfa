@@ -1034,11 +1034,25 @@ canvas.displayLayer {
 
 @media (max-width: 900px) {
     .monitorWindow  { padding: 14px 12px 0; }
-    .mainContent    { flex-direction: column; }
-    .visCol         { width: 100%; display: none; }
-    .statsGroup     { grid-template-columns: repeat(5, 1fr); gap: 8px; }
+    .mainContent    { flex-direction: column-reverse; gap: 24px; }
+    .visCol         { width: 100%; display: flex; }
+    .monitorCol     { width: 100%; }
+    .statsGroup     { grid-template-columns: repeat(3, 1fr); gap: 8px; }
     .statVal        { font-size: 18px; }
     .shTitle        { font-size: 20px; }
+    .psdFrame       { height: 180px; }
+    .nnFrame        { min-height: auto; }
+}
+
+@media (max-width: 640px) {
+    .retroNav { padding: 0 14px; }
+    .navBtn span  { display: none; }
+    .navBtn { padding: 9px; }
+    .navBrandName { font-size: 16px; }
+    .navBrandBadge { display: none; }
+    .litertText { display: none; }
+    .statsGroup { grid-template-columns: repeat(2, 1fr); }
+    .statItem:first-child { grid-column: 1 / -1; }
 }
 
 @media (max-width: 520px) {
@@ -1052,6 +1066,9 @@ canvas.displayLayer {
     }
     .statItem:first-child .statVal { font-size: 34px; }
     .statVal        { font-size: 20px; }
-    .bottomBar      { height: 96px; padding: 8px 12px; }
-    .saveContainer  { width: 68px; }
+    .bottomBar      { height: auto; min-height: 96px; padding: 12px; flex-direction: column; gap: 12px; }
+    .trendWrapper   { height: 80px; width: 100%; }
+    .saveContainer  { width: 100%; height: 48px; }
+    .saveBtn        { flex-direction: row; gap: 10px; }
+    .root           { padding-bottom: 160px; }
 }
