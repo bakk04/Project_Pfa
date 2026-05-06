@@ -6,12 +6,15 @@ import { usePathname } from "next/navigation";
 
 import { useSession, signOut } from "next-auth/react";
 import { UserMenu } from "./UserMenu";
+import GoogleTranslateToggle from "./GoogleTranslateToggle";
+import MedicalProxyModal from "./MedicalProxyModal";
 
 export default function Header() {
   const pathname = usePathname();
   const { data: session, status } = useSession();
   const [mounted, setMounted] = useState(false);
   const [isMobileNavActive, setIsMobileNavActive] = useState(false);
+  const [isMedicalProxyOpen, setIsMedicalProxyOpen] = useState(false);
 
   // Handle active class
   const isActive = (path: string) => pathname === path ? "active" : "";
@@ -60,6 +63,7 @@ export default function Header() {
       <div className="header-container container-fluid container-xl position-relative d-flex align-items-center justify-content-between">
         <Link href="/" className="logo d-flex align-items-center me-auto me-xl-0">
           <svg className="my-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            {/* SVG Content Unchanged */}
             <g id="bgCarrier" strokeWidth="0"></g>
             <g id="tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g>
             <g id="iconCarrier">
@@ -128,8 +132,9 @@ export default function Header() {
             <li className="dropdown"><Link href="#"><span>Resources</span> <i className="bi bi-chevron-down toggle-dropdown"></i></Link>
               <ul>
                 <li><Link href="/faq" className={isActive("/faq")}>FAQ</Link></li>
-                <li><Link href="/terms">Terms</Link></li>
-                <li><Link href="/privacy">Privacy</Link></li>
+                <li><Link href="/privacy" className={isActive("/privacy")}>Privacy Policy</Link></li>
+                <li><Link href="#" onClick={(e) => { e.preventDefault(); setIsMedicalProxyOpen(true); }}>Medical Proxy</Link></li>
+                <li><Link href="https://cdn.botpress.cloud/webchat/v3.6/shareable.html?configUrl=https://files.bpcontent.cloud/2025/05/04/18/20250504180130-CBY3CKOY.json" target="_blank">AI Chatbot</Link></li>
               </ul>
             </li>
             <li><Link href="/contact" className={isActive("/contact")}>Contact</Link></li>
@@ -137,19 +142,29 @@ export default function Header() {
           <i 
             className={`mobile-nav-toggle d-xl-none bi ${isMobileNavActive ? 'bi-x' : 'bi-list'}`}
             onClick={toggleMobileNav}
+            style={{ fontSize: '28px', cursor: 'pointer', color: 'var(--nav-color)' }}
           ></i>
         </nav>
 
-        <div key={status} className="auth-section d-none d-xl-flex" style={{ display: 'flex', alignItems: 'center', minWidth: '80px', justifyContent: 'flex-end' }}>
-            {status === "loading" ? (
-                <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#f0f0f0', border: '2px solid #e0e0e0', animation: 'pulse 1.5s infinite' }}></div>
-            ) : status === "authenticated" ? (
-                <UserMenu />
-            ) : (
-                <Link className="btn-getstarted" href="/login">Login</Link>
-            )}
+        <div className="header-actions d-flex align-items-center gap-2 gap-md-3">
+          <GoogleTranslateToggle />
+          
+          <div key={status} className="auth-section d-none d-xl-flex" style={{ display: 'flex', alignItems: 'center', minWidth: '80px', justifyContent: 'flex-end' }}>
+              {status === "loading" ? (
+                  <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#f0f0f0', border: '2px solid #e0e0e0', animation: 'pulse 1.5s infinite' }}></div>
+              ) : status === "authenticated" ? (
+                  <UserMenu />
+              ) : (
+                  <Link className="btn-getstarted" href="/login">Login</Link>
+              )}
+          </div>
         </div>
+
+        <MedicalProxyModal isOpen={isMedicalProxyOpen} onClose={() => setIsMedicalProxyOpen(false)} />
         <style jsx>{`
+          .header-actions {
+            margin-left: 15px;
+          }
           @keyframes pulse {
             0% { opacity: 1; }
             50% { opacity: 0.5; }

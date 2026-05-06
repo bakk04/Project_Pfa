@@ -1,19 +1,19 @@
 {
-  "name": "rPPG Monitor",
-  "short_name": "rPPG",
-  "start_url": "./index.html",
+  "name": "SEHATI",
+  "short_name": "SEHATI",
+  "start_url": "/",
   "display": "standalone",
-  "background_color": "#c0c0c0",
-  "theme_color": "#c0c0c0",
-  "orientation": "any",
+  "background_color": "#ffffff",
+  "theme_color": "#007bff",
+  "orientation": "portrait",
   "icons": [
     {
-      "src": "./resource/icon-192.png",
-      "sizes": "192x192",
+      "src": "/assets/logo/icon_128.png",
+      "sizes": "128x128",
       "type": "image/png"
     },
     {
-      "src": "./resource/icon-512.png",
+      "src": "/assets/logo/icon_512.png",
       "sizes": "512x512",
       "type": "image/png"
     }

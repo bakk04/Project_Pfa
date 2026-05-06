@@ -78,7 +78,7 @@ const UsersPage = () => {
                     <div className="flex items-center">
                       <div className="size-10 rounded-full bg-gray-200 me-3 flex items-center justify-center overflow-hidden">
                         {user.profileImage ? (
-                          <Image src={user.profileImage} alt="" className="size-full object-cover" />
+                          <Image src={user.profileImage} alt="" width={40} height={40} className="size-full object-cover" />
                         ) : (
                           <i className="ph ph-user text-xl text-gray-400"></i>
                         )}

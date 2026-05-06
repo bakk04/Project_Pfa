@@ -30,6 +30,25 @@
     --sh-teal: #30B0C7;
   }
 
+  /* AOS Visibility Fallback */
+  [data-aos] {
+    pointer-events: none;
+    opacity: 0;
+  }
+  .aos-init[data-aos] {
+    pointer-events: auto;
+    opacity: 1;
+  }
+  /* Ensure content is visible if AOS fails to load/init after 2 seconds */
+  @keyframes aos-fallback {
+    from { opacity: 0; }
+    to { opacity: 1; transform: none !important; }
+  }
+  [data-aos]:not(.aos-init) {
+    animation: aos-fallback 0.5s ease-in forwards;
+    animation-delay: 2s;
+  }
+
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;

@@ -22,15 +22,22 @@ export default function InitScripts() {
     // or trigger a custom event that main.js listens to.
     
     // For AOS
-    if (typeof window !== 'undefined' && window.AOS) {
-      window.AOS.init({
-        duration: 600,
-        easing: 'ease-in-out',
-        once: true,
-        mirror: false
-      });
-      window.AOS.refresh();
-    }
+    const initAOS = () => {
+      if (typeof window !== 'undefined' && window.AOS) {
+        window.AOS.init({
+          duration: 600,
+          easing: 'ease-in-out',
+          once: true,
+          mirror: false
+        });
+        window.AOS.refresh();
+      }
+    };
+
+    initAOS();
+    // Re-init after a short delay to ensure DOM is fully rendered
+    const timer = setTimeout(initAOS, 500);
+    const timerLong = setTimeout(initAOS, 2000);
 
     // For GLightbox
     if (typeof window !== 'undefined' && window.GLightbox) {
@@ -103,6 +110,11 @@ export default function InitScripts() {
       window.addEventListener('scroll', toggleScrollTop);
       toggleScrollTop();
     }
+
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(timerLong);
+    };
 
   }, [pathname]); // Re-run on path changes
 

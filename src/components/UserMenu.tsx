@@ -61,7 +61,7 @@ export function UserMenu() {
         }}
       >
         {imageUrl ? (
-          <Image src={imageUrl} alt={user.name || ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <Image src={imageUrl} alt={user.name || ''} width={40} height={40} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         ) : (
           <span style={{ letterSpacing: '0.5px', textShadow: '0 1px 2px rgba(0,0,0,0.1)' }}>{firstInitial}</span>
         )}

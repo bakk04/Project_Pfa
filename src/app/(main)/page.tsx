@@ -5,7 +5,7 @@ export default function Home() {
   return (
     <main className="main">
       {/* Preload the hero video for better performance */}
-      <link rel="preload" href="/assets/img/vid.mp4" as="video" type="video/mp4" />
+      <link rel="preload" href="https://res.cloudinary.com/dr2fjkaye/video/upload/q_auto,f_auto/v1778071051/vid.mp4" as="video" type="video/mp4" />
       
       {/* Hero Section */}
       <section id="hero" className="hero section dark-background">
@@ -24,7 +24,7 @@ export default function Home() {
                 poster="/assets/img/health/showcase-1.webp"
                 style={{ objectFit: 'cover' }}
               >
-                <source src="/assets/img/vid.mp4" type="video/mp4" />
+                <source src="https://res.cloudinary.com/dr2fjkaye/video/upload/q_auto,f_auto/v1778071051/vid.mp4" type="video/mp4" />
                 Your browser does not support the video tag.
               </video>
             </div>

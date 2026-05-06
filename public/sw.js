@@ -31,7 +31,8 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
-    if (!e.request.url.startsWith('http')) {
+    // Ignorer les appels non-http et les routes API pour éviter les conflits avec le backend
+    if (!e.request.url.startsWith('http') || e.request.url.includes('/api/')) {
         return;
     }
     e.respondWith(

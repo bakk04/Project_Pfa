@@ -46,7 +46,9 @@ export default async function RootLayout({
       <head>
         {/* Favicons */}
         <link href="/assets/img/favicon.png" rel="icon" />
-        <link href="/assets/img/apple-touch-icon.png" rel="apple-touch-icon" />
+        <link href="/assets/logo/icon_512.png" rel="apple-touch-icon" />
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#007bff" />
 
         {/* Vendor CSS Files */}
         <link href="/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
@@ -77,6 +79,10 @@ export default async function RootLayout({
         {/* Main JS File */}
         <Script src="/assets/js/main.js" strategy="afterInteractive" />
         
+        {/* AI Chatbot Integration */}
+        <Script src="https://cdn.botpress.cloud/webchat/v3.6/inject.js" strategy="afterInteractive" />
+        <Script src="https://files.bpcontent.cloud/2025/05/04/18/20250504180130-B20D7SC3.js" strategy="afterInteractive" defer />
+
         {/* React Re-initializer for Route Changes */}
         <InitScripts />
       </body>

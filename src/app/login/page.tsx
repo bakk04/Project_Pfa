@@ -223,10 +223,11 @@ function LoginContent() {
           loop
           muted
           playsInline
-          preload="metadata"
+          preload="auto"
+          poster="/assets/img/health/showcase-1.webp"
           className={styles.videoBackground}
         >
-          <source src="/assets/img/login.mp4" type="video/mp4" />
+          <source src="https://res.cloudinary.com/dr2fjkaye/video/upload/q_auto,f_auto/v1778075979/login.mp4" type="video/mp4" />
         </video>
         <div className={styles.videoOverlay}></div>
         
