@@ -101,16 +101,6 @@ export default function InitScripts() {
       new window.PureCounter();
     }
 
-    // Scroll Top Button logic
-    const scrollTop = document.querySelector('.scroll-top');
-    if (scrollTop) {
-      const toggleScrollTop = () => {
-        window.scrollY > 100 ? scrollTop.classList.add('active') : scrollTop.classList.remove('active');
-      };
-      window.addEventListener('scroll', toggleScrollTop);
-      toggleScrollTop();
-    }
-
     return () => {
       clearTimeout(timer);
       clearTimeout(timerLong);

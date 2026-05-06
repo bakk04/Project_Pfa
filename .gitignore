@@ -34,16 +34,4 @@ yarn-error.log*
 .vscode/
 .idea/
 
-# assets lourds (IMPORTANT pour ton cas)
-public/assets/img/*
-public/assets/videos/*
-public/uploads/*
-public/assets/img/*.mp4
-
-# optional media
-*.mp4
-*.mov
-*.avi
-
-*.mp4
 .next/

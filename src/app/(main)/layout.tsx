@@ -3,7 +3,6 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { usePathname } from "next/navigation";
-import Link from "next/link"
 
 export default function MainLayout({
   children,
@@ -24,11 +23,6 @@ export default function MainLayout({
         {children}
       </main>
       <Footer />
-      
-      {/* Scroll Top */}
-      <Link href="#" id="scroll-top" className="scroll-top d-flex align-items-center justify-content-center">
-        <i className="bi bi-arrow-up-short"></i>
-      </Link>
     </div>
   );
 }
