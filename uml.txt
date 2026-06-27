@@ -1,0 +1,185 @@
+ DOCUMENT D'ANALYSE FONCTIONNELLE ET MODÉLISATION UML
+
+  1. Présentation du Système
+
+   - Type de système : Application Web / Progressive Web App (PWA) de santé numérique et biométrique.
+   - Objectif : Permettre l'extraction et le suivi sans contact des constantes physiologiques (fréquence cardiaque, fréquence
+     respiratoire, saturation en oxygène SpO2, niveau de stress) via l'analyse vidéo (rPPG) par la caméra de l'utilisateur, tout en
+     offrant une plateforme d'évaluation clinique assistée par l'Intelligence Artificielle.
+   - Fonctionnalités principales :
+     - Mesure biométrique sans contact (rPPG) via flux vidéo.
+     - Suivi des données de santé (historique, statistiques, graphiques).
+     - Évaluation des risques cliniques et génération de prédictions via IA.
+     - Assistant de santé conversationnel (Chatbot IA).
+     - Synchronisation hors ligne (Offline-first via IndexedDB).
+     - Administration et monitoring global du système.
+   - Technologies détectées : Next.js 14+ (App Router), React 18, TypeScript, TailwindCSS, MediaPipe Tasks Vision (Machine Learning
+     côté client), Web Workers (DSP pipeline), MongoDB (Mongoose), Capacitor (Mobile), Google Generative AI.
+   - Architecture fonctionnelle : Architecture client-serveur moderne avec déportation des traitements lourds (Deep Learning /
+     Traitement du signal) sur le navigateur (Web Workers) pour garantir la confidentialité des données vidéo.
+
+  ---
+
+  2. Identification des Acteurs
+
+  L'analyse du code source et des modèles de données révèle les acteurs suivants :
+
+  Acteurs Humains (Primaires)
+   1. Visiteur
+      - Description : Utilisateur non authentifié naviguant sur la plateforme publique.
+      - Responsabilités : Découvrir la solution, consulter la documentation (FAQ) et initier le processus d'inscription.
+      - Permissions : Accès en lecture aux pages publiques, accès à la création de compte.
+   2. Utilisateur / Patient
+      - Description : Utilisateur authentifié bénéficiant des services de santé de la plateforme.
+      - Responsabilités : Gérer son profil de santé, effectuer des mesures rPPG, interagir avec l'IA.
+      - Permissions : Mesure vitale, lecture/écriture de ses propres données médicales, discussion IA.
+   3. Administrateur
+      - Description : Opérateur en charge du maintien et de la supervision de la plateforme.
+      - Responsabilités : Gérer les comptes utilisateurs, analyser les métriques d'utilisation et les logs système.
+      - Permissions : Accès complet aux tableaux de bord d'administration (DashboardAdmin), gestion CRUD sur les entités système.
+
+  Acteurs Systèmes (Secondaires / Tiers)
+   4. Moteur d'Analyse rPPG (MediaPipe / DSP Worker)
+      - Description : Sous-système technique asynchrone fonctionnant en Web Worker.
+      - Responsabilités : Analyser les flux vidéo, détecter le visage (ROI) et exécuter les algorithmes de traitement du signal (POS,
+        Filtre Butterworth) pour en déduire les biométriques.
+   5. Service IA (Google Generative AI)
+      - Description : API externe d'Intelligence Artificielle.
+      - Responsabilités : Traiter les prompts médicaux, analyser les données cliniques soumises et générer les réponses du chatbot et
+        les prédictions de risque.
+
+  ---
+
+  3. Cas d’Utilisation Principaux
+
+  3.1. S'authentifier sur la plateforme
+   - Objectif : Vérifier l'identité d'un utilisateur pour lui donner accès à son espace sécurisé.
+   - Acteur Principal : Visiteur / Utilisateur
+   - Acteurs Secondaires : Aucun
+   - Préconditions : Posséder des identifiants valides ou en créer de nouveaux.
+   - Postconditions : Une session sécurisée (JWT/NextAuth) est établie.
+   - Scénario Principal : L'acteur saisit ses identifiants. Le système valide le hachage du mot de passe et génère un jeton d'accès.
+     L'acteur est redirigé vers son tableau de bord.
+   - Scénarios Alternatifs : Création d'un nouveau compte (S'inscrire).
+   - Exceptions possibles : Identifiants incorrects, compte désactivé par l'Administrateur.
+
+  3.2. Mesurer les constantes vitales (rPPG)
+   - Objectif : Capturer et analyser le flux vidéo en temps réel pour extraire la fréquence cardiaque, SpO2 et le stress.
+   - Acteur Principal : Utilisateur / Patient
+   - Acteurs Secondaires : Moteur d'Analyse rPPG
+   - Préconditions : Être authentifié. Disposer d'une caméra fonctionnelle.
+   - Postconditions : Les mesures physiologiques sont extraites, affichées et enregistrées.
+   - Scénario Principal : L'utilisateur lance le processus. Le système demande l'accès à la caméra. L'utilisateur cadre son visage.
+     Le Moteur rPPG analyse le flux pendant 30 secondes. Le système affiche les résultats et les sauvegarde dans la base de données.
+   - Scénarios Alternatifs : En cas de perte réseau, le système sauvegarde la mesure dans la file d'attente locale (IndexedDB) pour
+     synchronisation ultérieure.
+   - Exceptions possibles : L'utilisateur refuse l'autorisation de la caméra. Éclairage insuffisant ou visage non détecté.
+
+  3.3. Consulter le tableau de bord de santé
+   - Objectif : Visualiser l'historique et l'évolution des données biométriques et d'activité.
+   - Acteur Principal : Utilisateur / Patient
+   - Acteurs Secondaires : Aucun
+   - Préconditions : Être authentifié.
+   - Postconditions : Les graphiques (Apexcharts/Recharts) et métriques sont affichés.
+   - Scénario Principal : L'utilisateur accède à la vue "Overview". Le système récupère l'historique des modèles Measurement. Le
+     système génère les graphiques d'évolution (HR, HRV).
+   - Scénarios Alternatifs : L'utilisateur filtre les données par période (hebdomadaire, mensuelle).
+   - Exceptions possibles : Aucune donnée antérieure disponible (affichage d'un état vide / onboarding).
+
+  3.4. Générer une prédiction de risque clinique
+   - Objectif : Fournir une évaluation des risques de santé basée sur le profil, les antécédents et les biométriques.
+   - Acteur Principal : Utilisateur / Patient
+   - Acteurs Secondaires : Service IA
+   - Préconditions : Le profil de santé (poids, antécédents, etc.) doit être complété.
+   - Postconditions : Un rapport de prédiction clinique est affiché et consigné.
+   - Scénario Principal : L'utilisateur navigue vers l'onglet Prédiction. Il valide ou met à jour ses données cliniques. Le système
+     compile ces données et les envoie au Service IA via un prompt structuré. Le Service IA retourne l'analyse de risque. Le système
+     affiche l'évaluation.
+   - Exceptions possibles : Indisponibilité du Service IA (Timeout API).
+
+  3.5. Discuter avec l'assistant santé (Chatbot)
+   - Objectif : Poser des questions de santé personnalisées basées sur les données biométriques récentes de l'utilisateur.
+   - Acteur Principal : Utilisateur / Patient
+   - Acteurs Secondaires : Service IA
+   - Préconditions : Être authentifié.
+   - Postconditions : L'historique de la conversation est mis à jour.
+   - Scénario Principal : L'utilisateur saisit une question. Le système injecte le contexte santé de l'utilisateur (mesures récentes)
+     dans la requête. Le Service IA génère une réponse contextuelle.
+
+  3.6. Superviser les métriques du système
+   - Objectif : Permettre le suivi technique et métier de la plateforme.
+   - Acteur Principal : Administrateur
+   - Acteurs Secondaires : Aucun
+   - Préconditions : Avoir le rôle admin et être authentifié.
+   - Postconditions : Affichage des KPI globaux.
+   - Scénario Principal : L'admin accède au DashboardAdmin. Le système compile les statistiques d'utilisation globales (nombre
+     d'inscrits, taux de réussite rPPG, activité système).
+   - Scénarios Alternatifs : Gestion spécifique des utilisateurs (bloquer/activer un compte).
+
+  ---
+
+  4. Relations UML
+
+  Relations <<include>>
+  Traitements obligatoires systématisés.
+   - Mesurer les constantes vitales <<include>> Autoriser l'accès à la caméra (Prérequis strict pour démarrer l'acquisition PWA).
+   - Générer une prédiction de risque clinique <<include>> Renseigner les données cliniques (Le formulaire est obligatoire avant
+     l'envoi au moteur IA).
+   - Superviser les métriques du système <<include>> S'authentifier (Garantie de sécurité pour l'accès aux routes /dashboardAdmin).
+
+  Relations <<extend>>
+  Comportements optionnels, conditionnels ou de reprise sur erreur.
+   - Synchroniser les mesures hors-ligne <<extend>> Mesurer les constantes vitales (La synchronisation via useIndexedDbQueue s'active
+     uniquement si l'utilisateur perd sa connexion internet lors de la mesure).
+   - Filtrer par période <<extend>> Consulter le tableau de bord de santé (Action optionnelle de l'utilisateur sur l'interface
+     graphique).
+
+  ---
+
+  5. Hiérarchie des Acteurs
+
+  L'architecture Next.js et l'authentification Mongoose démontrent une héritage clair des droits d'accès :
+
+   - Visiteur est la classe de base.
+   - Utilisateur / Patient hérite de Visiteur (il dispose de toutes les capacités publiques + ses accès privés).
+   - Administrateur hérite de Utilisateur / Patient (un admin possède un compte système et peut potentiellement tester les fonctions
+     de mesure, en plus d'avoir accès au panneau de configuration global).
+
+  ---
+
+  6. Organisation Fonctionnelle (Packages UML)
+
+  Pour un diagramme optimal, les cas d'utilisation doivent être regroupés en "Packages" représentant les sous-domaines métier :
+
+   1. Package "Gestion des Identités (IAM)" (S'authentifier, S'inscrire, Gérer le profil).
+   2. Package "Module Biométrique (rPPG)" (Autoriser la caméra, Mesurer les constantes vitales, Synchroniser les mesures).
+   3. Package "Analyse & Intelligence Artificielle" (Consulter le dashboard de santé, Discuter avec l'assistant, Générer prédiction
+      de risque).
+   4. Package "Supervision (Back-office)" (Superviser le système, Gérer les utilisateurs).
+
+  ---
+
+  7. Analyse Métier Avancée
+
+   - Confidentialité par conception (Privacy by Design) : La mesure rPPG s'effectuant exclusivement côté client (rppg.worker.ts en
+     local), aucune donnée vidéo brute n'est transmise au serveur. Le système de modélisation ne doit donc jamais suggérer de
+     transfert vidéo vers le cloud, seuls les résultats (Measurement.ts) sont sauvegardés.
+   - PWA et Résilience : Le projet est structuré comme une PWA (next-pwa). Cela implique une forte logique métier sur la gestion
+     hors-ligne. L'intégration de requêtes asynchrones en attente dans un IndexedDB est un Use Case système invisible pour
+     l'utilisateur mais vital pour la robustesse UML.
+   - Couplage IA : L'interaction avec le Service IA n'est pas "stateless". Les requêtes IA sont enrichies (RAG/Contexte) avec les
+     données issues du package "Module Biométrique" pour fournir un retour clinique pertinent.
+
+  ---
+
+  8. Recommandations UML (Pour le concepteur ou le générateur)
+
+   1. Disposition spatiale : Utiliser une disposition horizontale (Left-to-Right). Placer les acteurs Humains (Primaires) à gauche de
+      la limite du système (System Boundary) et les acteurs Systèmes/API (Secondaires) à droite.
+   2. Frontières du système (System Boundary) : Nommer la boîte englobante principale Système rPPG Web Platform.
+   3. Lisibilité : Séparer visuellement le bloc "Administration" des blocs liés à la "Santé/Patient" afin d'éviter le croisement
+      massif des lignes d'association.
+   4. Précision des flèches : S'assurer que les relations <<extend>> pointent du cas d'utilisation optionnel VERS le cas
+      d'utilisation de base, tandis que les relations <<include>> pointent du cas de base VERS le cas inclus.
+   5. Couleurs (Optionnel mais recommandé) : Utiliser des stéréotypes visuels (par exemple, bleu pour l'IA, vert pour le médical,
+      gris pour le système de base) pour différencier les packages au sein de l'outil de modélisation (PlantUML / Draw.io).

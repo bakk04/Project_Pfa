@@ -1160,29 +1160,79 @@ const FacePhysMonitor: React.FC = () => {
 
             const result = await response.json();
             stopSystem(); // Ensure camera turns off immediately
-            setPredictionResult(result, {
-                id: `test_${Date.now()}`,
-                timestamp: new Date().toISOString(),
-                status: 'success',
+
+            const sessionData = {
+                status: 'success' as const,
                 metrics: { 
                     hr: heartRate, 
                     sqi: stateRef.current.currentSqi, 
                     risk_status: result.risk_status, 
                     probability: result.final_probability || result.probability 
                 }
-            });
+            };
+
+            try {
+                const saveRes = await fetch('/api/user/measurements', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(sessionData)
+                });
+                if (saveRes.ok) {
+                    const savedSession = await saveRes.json();
+                    setPredictionResult(result, savedSession);
+                } else {
+                    setPredictionResult(result, {
+                        id: `test_${Date.now()}`,
+                        timestamp: new Date().toISOString(),
+                        ...sessionData
+                    });
+                }
+            } catch (saveErr) {
+                console.error("Failed to save measurement to DB:", saveErr);
+                setPredictionResult(result, {
+                    id: `test_${Date.now()}`,
+                    timestamp: new Date().toISOString(),
+                    ...sessionData
+                });
+            }
+
             router.push('/profile');
         } catch (err: any) {
             console.error("Analysis failed:", err);
             const errorMessage = err.message || "Analysis failed";
             setError(errorMessage);
             toast.error("Analysis failed: " + errorMessage);
-            setPredictionResult({ error: errorMessage }, {
-                id: `test_${Date.now()}`,
-                timestamp: new Date().toISOString(),
-                status: 'model_unavailable',
+
+            const sessionData = {
+                status: 'model_unavailable' as const,
                 metrics: { hr: heartRate, sqi: stateRef.current.currentSqi }
-            });
+            };
+
+            try {
+                const saveRes = await fetch('/api/user/measurements', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(sessionData)
+                });
+                if (saveRes.ok) {
+                    const savedSession = await saveRes.json();
+                    setPredictionResult({ error: errorMessage }, savedSession);
+                } else {
+                    setPredictionResult({ error: errorMessage }, {
+                        id: `test_${Date.now()}`,
+                        timestamp: new Date().toISOString(),
+                        ...sessionData
+                    });
+                }
+            } catch (saveErr) {
+                console.error("Failed to save failed measurement to DB:", saveErr);
+                setPredictionResult({ error: errorMessage }, {
+                    id: `test_${Date.now()}`,
+                    timestamp: new Date().toISOString(),
+                    ...sessionData
+                });
+            }
+
             stopSystem();
             router.push('/profile');
         } finally {

@@ -24,6 +24,7 @@ interface VitalStoreState {
   setLoading: (loading: boolean) => void
   setError: (error: string | null) => void
   reset: () => void
+  fetchTestHistory: () => Promise<void>
 }
 
 export const useVitalStore = create<VitalStoreState>((set) => ({
@@ -40,5 +41,16 @@ export const useVitalStore = create<VitalStoreState>((set) => ({
   })),
   setLoading: (loading) => set({ isLoading: loading }),
   setError: (error) => set({ error: error }),
-  reset: () => set({ onboardingData: null, predictionResult: null, isLoading: false, error: null })
+  reset: () => set({ onboardingData: null, predictionResult: null, isLoading: false, error: null }),
+  fetchTestHistory: async () => {
+    try {
+      const res = await fetch('/api/user/measurements')
+      if (res.ok) {
+        const history = await res.json()
+        set({ testHistory: history })
+      }
+    } catch (err) {
+      console.error('[useVitalStore] Failed to fetch test history:', err)
+    }
+  }
 }))

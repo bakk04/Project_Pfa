@@ -11,7 +11,7 @@ export async function POST(req: Request) {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-flash-lite-latest' });
 
     const prompt = `
       As a Clinical AI Assistant, provide a patient-friendly explanation for the following diabetes risk assessment:

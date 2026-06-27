@@ -30,6 +30,7 @@ import {
 } from 'lucide-react'
 import { useVitalStore } from '@/store/vital-store'
 import Image from 'next/image'
+import { toast } from 'sonner'
 
 const WeeklyActivityChart = dynamic(() => import('../charts/WeeklyActivityChart'), { 
   ssr: false,
@@ -62,17 +63,79 @@ export function OverviewTab({ onStartTest }: OverviewTabProps) {
   const { currentPrediction, askAI } = usePrediction()
   const { vitals, activity, triggerSync } = useHealthData()
   const history = useHealthStore((state) => state.history)
-  const { predictionResult, testHistory, reset: resetVitalStore, onboardingData } = useVitalStore()
+  const { predictionResult, testHistory, reset: resetVitalStore, onboardingData, fetchTestHistory } = useVitalStore()
 
   const [mounted, setMounted] = useState(false)
   const [isSyncing, setIsSyncing] = useState(false)
   const [aiExplanation, setAiExplanation] = useState<string | null>(null)
   const [isAskingAI, setIsAskingAI] = useState(false)
 
-  useEffect(() => { setMounted(true) }, [])
+  useEffect(() => { 
+    setMounted(true)
+    fetchTestHistory()
+  }, [fetchTestHistory])
+
+  const getOrFetchClinicalData = async () => {
+    if (onboardingData?.clinical_data) {
+      return onboardingData.clinical_data
+    }
+    
+    try {
+      const res = await fetch('/api/user/profile')
+      if (res.ok) {
+        const userData = await res.json()
+        
+        const ensureBool = (val: any) => {
+          if (typeof val === 'boolean') return val;
+          if (typeof val === 'string') {
+            const s = val.toLowerCase();
+            return ['true', 'yes', 'current', 'parent', 'sibling', 'both', 'family'].includes(s);
+          }
+          return !!val;
+        };
+
+        return {
+          weight: userData?.healthData?.weight || 75,
+          height: userData?.healthData?.height || 175,
+          glucose_fasting_mg_dl: 100,
+          hba1c: 5.4,
+          smoking: ensureBool(userData?.healthData?.smoking),
+          familyHistory: ensureBool(userData?.healthData?.familyHistory),
+          gender: userData?.healthData?.gender ?? 1,
+          bloodpressure: 120,
+          pregnancies: 0,
+          skinthickness: 20,
+          insulin: 80,
+          diabetespedigreefunction: 0.47,
+          dateOfBirth: userData?.dateOfBirth ? userData.dateOfBirth.split('T')[0] : "1990-01-01"
+        }
+      }
+    } catch (fetchErr) {
+      console.error('[OverviewTab] Fetch profile error:', fetchErr)
+    }
+
+    return {
+      weight: 75,
+      height: 175,
+      glucose_fasting_mg_dl: 100,
+      hba1c: 5.4,
+      smoking: false,
+      familyHistory: false,
+      gender: 1,
+      bloodpressure: 120,
+      pregnancies: 0,
+      skinthickness: 20,
+      insulin: 80,
+      diabetespedigreefunction: 0.47,
+      dateOfBirth: "1990-01-01"
+    }
+  }
 
   const handleAskAI = async () => {
-    if (!onboardingData?.clinical_data || !predictionResult) return
+    if (!predictionResult) {
+      toast.error('No prediction result found.')
+      return
+    }
     setIsAskingAI(true)
     try {
       const formattedPrediction = {
@@ -80,27 +143,38 @@ export function OverviewTab({ onStartTest }: OverviewTabProps) {
         final_probability: predictionResult.final_probability || predictionResult.probability || 0,
         risk_status: predictionResult.risk_status
       }
-      const explanation = await askAI(formattedPrediction, onboardingData.clinical_data)
+      const clinicalData = await getOrFetchClinicalData()
+      const explanation = await askAI(formattedPrediction, clinicalData)
       setAiExplanation(explanation)
-    } catch (error) {
-      console.error(error)
+    } catch (error: any) {
+      console.error('[OverviewTab] Ask AI error:', error)
+      toast.error(error?.message || 'Failed to get AI explanation. Please try again.')
     } finally {
       setIsAskingAI(false)
     }
   }
 
-  const handleDownloadReport = () => {
-    if (!onboardingData?.clinical_data || !predictionResult) return
-    const patientInfo = {
-      name: session?.user?.name || 'Valued Patient',
-      id: session?.user?.id || 'ANON-123'
+  const handleDownloadReport = async () => {
+    if (!predictionResult) {
+      toast.error('No prediction result found.')
+      return
     }
-    const formattedPrediction = {
-      ...predictionResult,
-      final_probability: predictionResult.final_probability || predictionResult.probability || 0,
-      risk_status: predictionResult.risk_status
+    try {
+      const patientInfo = {
+        name: session?.user?.name || 'Valued Patient',
+        id: session?.user?.id || 'ANON-123'
+      }
+      const formattedPrediction = {
+        ...predictionResult,
+        final_probability: predictionResult.final_probability || predictionResult.probability || 0,
+        risk_status: predictionResult.risk_status
+      }
+      const clinicalData = await getOrFetchClinicalData()
+      generateMedicalReport(formattedPrediction, clinicalData, patientInfo)
+    } catch (error) {
+      console.error('[OverviewTab] Download report error:', error)
+      toast.error('Failed to generate medical report.')
     }
-    generateMedicalReport(formattedPrediction, onboardingData.clinical_data, patientInfo)
   }
 
   const hasPrediction = !!currentPrediction

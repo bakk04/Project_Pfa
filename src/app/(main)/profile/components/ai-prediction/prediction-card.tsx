@@ -9,6 +9,7 @@ import { usePrediction } from '@/hooks/usePrediction'
 import { generateMedicalReport } from '@/utils/report'
 import { useSession } from 'next-auth/react'
 import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
 
 interface PredictionCardProps {
   prediction: DiabetesPrediction | null
@@ -44,26 +45,88 @@ export function PredictionCard({ prediction, clinicalData, isLoading }: Predicti
     )
   }
 
+  const getOrFetchClinicalData = async () => {
+    if (clinicalData) {
+      return clinicalData
+    }
+    
+    try {
+      const res = await fetch('/api/user/profile')
+      if (res.ok) {
+        const userData = await res.json()
+        
+        const ensureBool = (val: any) => {
+          if (typeof val === 'boolean') return val;
+          if (typeof val === 'string') {
+            const s = val.toLowerCase();
+            return ['true', 'yes', 'current', 'parent', 'sibling', 'both', 'family'].includes(s);
+          }
+          return !!val;
+        };
+
+        return {
+          weight: userData?.healthData?.weight || 75,
+          height: userData?.healthData?.height || 175,
+          glucose_fasting_mg_dl: 100,
+          hba1c: 5.4,
+          smoking: ensureBool(userData?.healthData?.smoking),
+          familyHistory: ensureBool(userData?.healthData?.familyHistory),
+          gender: userData?.healthData?.gender ?? 1,
+          bloodpressure: 120,
+          pregnancies: 0,
+          skinthickness: 20,
+          insulin: 80,
+          diabetespedigreefunction: 0.47,
+          dateOfBirth: userData?.dateOfBirth ? userData.dateOfBirth.split('T')[0] : "1990-01-01"
+        }
+      }
+    } catch (fetchErr) {
+      console.error('[PredictionCard] Fetch profile error:', fetchErr)
+    }
+
+    return {
+      weight: 75,
+      height: 175,
+      glucose_fasting_mg_dl: 100,
+      hba1c: 5.4,
+      smoking: false,
+      familyHistory: false,
+      gender: 1,
+      bloodpressure: 120,
+      pregnancies: 0,
+      skinthickness: 20,
+      insulin: 80,
+      diabetespedigreefunction: 0.47,
+      dateOfBirth: "1990-01-01"
+    }
+  }
+
   const handleAskAI = async () => {
-    if (!clinicalData) return
     setIsAskingAI(true)
     try {
-      const explanation = await askAI(prediction, clinicalData)
+      const activeClinicalData = await getOrFetchClinicalData()
+      const explanation = await askAI(prediction, activeClinicalData)
       setAiExplanation(explanation)
-    } catch (error) {
-      console.error(error)
+    } catch (error: any) {
+      console.error('[PredictionCard] Ask AI error:', error)
+      toast.error(error?.message || 'Failed to get AI explanation. Please try again.')
     } finally {
       setIsAskingAI(false)
     }
   }
 
-  const handleDownloadReport = () => {
-    if (!clinicalData) return
-    const patientInfo = {
-      name: session?.user?.name || 'Valued Patient',
-      id: session?.user?.id || 'ANON-123'
+  const handleDownloadReport = async () => {
+    try {
+      const patientInfo = {
+        name: session?.user?.name || 'Valued Patient',
+        id: session?.user?.id || 'ANON-123'
+      }
+      const activeClinicalData = await getOrFetchClinicalData()
+      generateMedicalReport(prediction, activeClinicalData, patientInfo)
+    } catch (error) {
+      console.error('[PredictionCard] Download report error:', error)
+      toast.error('Failed to generate medical report.')
     }
-    generateMedicalReport(prediction, clinicalData, patientInfo)
   }
 
   const getRiskColor = (status: string) => {

@@ -1,0 +1,202 @@
+1. Présentation Générale du Système
+
+   - Type de système : Plateforme de télésanté PWA (Progressive Web App) spécialisée dans la capture de signes vitaux par
+     photopléthysmographie à distance (rPPG).
+   - Architecture : Architecture découplée basée sur le Pattern Repository & Service côté serveur (API Routes) et une gestion d'état
+     Store-Service-Worker côté client.
+   - Modules principaux :
+       - Core Biométrique : Traitement du signal (DSP) via Web Workers.
+       - Gestion des Identités : Authentification sécurisée et profils cliniques.
+       - Intelligence Artificielle : Analyse prédictive et assistant conversationnel.
+       - Persistance & Sync : Synchronisation MongoDB et stockage local IndexedDB.
+   - Technologies clés : Mongoose (ODM), Next-Auth, MediaPipe, Web Workers, Google Generative AI.
+
+  ---
+
+  2. Identification des Classes Métier
+
+  Noyau de Données (Entities)
+   - User : Entité centrale représentant le patient ou l'administrateur.
+   - Measurement : Représentation d'une capture physiologique unique (FC, SpO2, etc.).
+   - HealthData : Objet de valeur (Value Object) contenant les paramètres anthropométriques (IMC, antécédents).
+
+  Services et Logique (Services)
+   - HealthService : Orchestrateur de la récupération et du traitement des données de santé.
+   - PredictionService : Interface avec l'IA pour l'analyse des risques cliniques.
+   - AuthService : Gestionnaire de session et de sécurité.
+
+  Infrastructure et Traitement (Infrastructure)
+   - RppgAnalyzer (Web Worker) : Classe de traitement intensif du flux vidéo.
+   - HealthProvider (Interface) : Abstraction pour les sources de données (Web vs Native).
+   - VitalStore : Gestionnaire d'état réactif pour les constantes temps-réel.
+
+  ---
+
+  3. Description Complète des Classes
+
+  Classe : User (Entité Métier)
+  Description : Gère l'identité et les caractéristiques fondamentales de l'utilisateur.
+   - Attributs :
+       - - id : ObjectId
+       - + firstName : String
+       - + lastName : String
+       - + email : String
+       - - password : String
+       - + role : UserRole = "user"
+       - + healthProfile : HealthData
+   - Méthodes :
+       - + getFullName() : String
+       - + updateHealthProfile(data : HealthData) : void
+
+  Classe : Measurement (Entité Métier)
+  Description : Enregistrement horodaté d'un signe vital.
+   - Attributs :
+       - - id : ObjectId
+       - - userId : ObjectId
+       - + type : MeasurementType (Enum: HEART_RATE, SPO2, STRESS, RESPIRATION)
+       - + value : Double
+       - + unit : String
+       - + timestamp : DateTime
+   - Méthodes :
+       - + validateRange() : Boolean
+
+  Classe : HealthService (Service)
+  Description : Centralise la logique métier de gestion des données de santé.
+   - Attributs :
+       - - provider : HealthProvider
+   - Méthodes :
+       - + syncMeasurements() : Promise<void>
+       - + getHistoricalData(userId : String, period : Period) : Measurement[]
+
+  Classe : RppgAnalyzer (Service / Worker)
+  Description : Implémente le pipeline DSP (Digital Signal Processing) pour l'extraction des données depuis la caméra.
+   - Attributs :
+       - - sampleRate : Integer = 30
+       - - buffer : FrameBuffer
+   - Méthodes :
+       - + processFrame(imageData : ImageData) : void
+       - + computeVitals() : MeasurementPackage
+       - - applyButterworthFilter(signal : Double[]) : Double[]
+
+  ---
+
+  4. Relations UML
+
+  Hiérarchie et Abstraction
+   - Admin ----|> User (Héritage : L'administrateur est un utilisateur spécialisé).
+   - HealthProvider <<interface>>
+       - WebHealthProvider ....|> HealthProvider (Implémentation).
+       - NativeHealthProvider ....|> HealthProvider (Implémentation via Capacitor).
+
+  Associations et Compositions
+   - User "1" *------ "*" Measurement (Composition : Une mesure appartient strictement à un utilisateur).
+   - User "1" *------ "1" HealthData (Composition : Le profil santé est une partie intégrante de l'utilisateur).
+   - HealthService ------> HealthProvider (Agrégation : Le service utilise une instance de fournisseur).
+   - VitalStore o---- "*" Measurement (Agrégation : Le store contient les mesures récentes en mémoire).
+
+  Dépendances
+   - PredictionService ..> [Service IA] (Dépendance externe vers Google Gemini).
+   - RppgAnalyzer ..> [MediaPipe] (Dépendance vers le moteur de vision).
+
+  ---
+
+  5. Héritage et Polymorphisme
+
+   - HealthProvider (Interface) : Définit la signature fetchSteps(), fetchHeartRate(). Le polymorphisme permet au système de basculer
+     dynamiquement entre les capteurs matériels (Mobile) et les APIs Web selon l'environnement d'exécution (détecté par
+     HealthService).
+   - MeasurementType (Enum) : Utilisation pour typer les stratégies de rendu graphique.
+
+  ---
+
+  6. Architecture Modulaire (Packages)
+
+   - com.rppg.identity : Classes User, Admin, AuthService.
+   - com.rppg.biometrics : Classes Measurement, RppgAnalyzer, VitalStore.
+   - com.rppg.intelligence : Classes PredictionService, AiChatService.
+   - com.rppg.infrastructure : Classes HealthProvider, MongoDBClient, LocalStorage.
+
+  ---
+
+  7. Analyse Technique Avancée
+
+   1. Séparation des préoccupations (SoC) : Les classes de données (Models) sont isolées de la logique de traitement (Workers). Le
+      HealthService agit comme une façade (Pattern Facade) pour masquer la complexité du multi-provider.
+   2. Gestion de la concurrence : La classe RppgAnalyzer s'exécute dans un contexte de thread séparé (Web Worker), communiquant par
+      passage de messages, ce qui est modélisé comme une association asynchrone en UML.
+   3. Persistance : Utilisation d'un schéma Mongoose asymétrique où les Measurement sont stockées de manière chronologique
+      (Time-series) pour l'efficacité analytique.
+
+  ---
+
+  8. Optimisation Architecture
+
+   - Extensibilité : L'ajout d'un nouveau capteur (ex: Apple HealthKit) nécessite simplement une nouvelle implémentation de
+     HealthProvider sans modifier le HealthService.
+   - Scalabilité : L'utilisation du pattern Store (Zustand) permet une réactivité UI sans couplage direct avec les appels API.
+   - Sécurité : Les attributs sensibles de User (password) sont marqués en visibilité privée (-) et exclus des DTOs par design.
+
+  ---
+
+  9. Recommandations UML Professionnelles
+
+   1. Formatage : Utiliser des boîtes de classes avec trois compartiments distincts (Nom, Attributs, Opérations).
+   2. Stéréotypes : Marquer clairement les interfaces avec «interface» et les workers avec «worker» ou «service».
+   3. Cardinalités : Préciser systématiquement les multiplicités (ex: 1..*) pour les relations de données.
+   4. Lisibilité : Privilégier une organisation par couches (Layered layout) :
+       - Haut : UI / Stores
+       - Milieu : Services / Business Logic
+       - Bas : Entities / Providers / Infrastructure
+
+  ---
+
+  Spécifications pour Génération Automatique (PlantUML)
+
+    1 @startuml
+    2 skinparam style strictuml
+    3
+    4 package "Identity" {
+    5     class User {
+    6         - id : ObjectId
+    7         + firstName : String
+    8         + lastName : String
+    9         + email : String
+   10         - password : String
+   11         + role : Role
+   12         + getFullName() : String
+   13     }
+   14     class Admin extends User
+   15 }
+   16
+   17 package "Biometrics" {
+   18     class Measurement {
+   19         - userId : ObjectId
+   20         + type : MeasurementType
+   21         + value : Double
+   22         + unit : String
+   23         + timestamp : DateTime
+   24     }
+   25     class HealthData <<ValueObject>> {
+   26         + weight : Double
+   27         + height : Double
+   28         + gender : Integer
+   29     }
+   30 }
+   31
+   32 interface HealthProvider {
+   33     + getHeartRate() : Promise
+   34     + getSteps() : Promise
+   35 }
+   36
+   37 class HealthService {
+   38     - provider : HealthProvider
+   39     + syncAll() : void
+   40 }
+   41
+   42 User "1" *-- "1" HealthData
+   43 User "1" *-- "*" Measurement
+   44 HealthService o-- HealthProvider
+   45 HealthProvider <|.. WebHealthProvider
+   46 HealthProvider <|.. NativeHealthProvider
+   47
+   48 @enduml
