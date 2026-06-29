@@ -48,7 +48,7 @@ export function useChat() {
         const assistantMsg: ChatMessage = {
           id: `assistant-${Date.now()}`,
           role: 'assistant',
-          content: data.message,
+          content: data.data?.message || data.message || '',
           timestamp: new Date(),
         }
         addMessage(assistantMsg)

@@ -1,9 +1,10 @@
 'use client'
 
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import dynamic from 'next/dynamic'
 import { useHealthStore } from '@/services/healthStore'
+import { useVitalStore } from '@/store/vital-store'
 import { GlassCard } from '../shared/GlassCard'
 import { HealthSummaryCards } from '../cards/health-summary-cards'
 import { cn } from '@/lib/utils'
@@ -32,17 +33,41 @@ const itemVariants = {
 }
 
 export function HealthDataTab() {
-  const history = useHealthStore((state) => state.history)
-  const isLoading = useHealthStore((state) => state.isLoading)
+  const { testHistory, fetchTestHistory, isLoading } = useVitalStore()
   const [period, setPeriod] = useState<'D' | 'W' | 'M'>('D')
 
+  useEffect(() => {
+    fetchTestHistory()
+  }, [fetchTestHistory])
+
   const chartData = useMemo(() => {
-    return history.heartRate.map(item => ({
-      time: new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      value: item.value,
-      timestamp: item.timestamp
-    }))
-  }, [history.heartRate])
+    const now = Date.now()
+    const msInDay = 24 * 60 * 60 * 1000
+    
+    const filtered = [...testHistory]
+      .filter(item => item.status === 'success' && item.metrics?.hr)
+      .filter(item => {
+        const ts = new Date(item.timestamp).getTime()
+        if (period === 'D') return now - ts <= msInDay
+        if (period === 'W') return now - ts <= 7 * msInDay
+        if (period === 'M') return now - ts <= 30 * msInDay
+        return true
+      })
+      .reverse() // chronological order
+
+    return filtered.map(item => {
+      const date = new Date(item.timestamp)
+      const isToday = date.toDateString() === new Date().toDateString()
+      const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      const dateStr = date.toLocaleDateString([], { month: 'short', day: 'numeric' })
+      
+      return {
+        time: isToday ? timeStr : `${dateStr} ${timeStr}`,
+        value: item.metrics.hr!,
+        timestamp: date.getTime()
+      }
+    })
+  }, [testHistory, period])
 
   const avgHeartRate = useMemo(() => {
     if (chartData.length === 0) return 0
